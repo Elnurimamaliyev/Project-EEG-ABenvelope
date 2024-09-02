@@ -13,15 +13,12 @@ clear, clc;
 %#ok<*SAGROW>
 %#ok<*NASGU>
 %#ok<*NOPTS>
-
 %% Add Main path
-
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\preprocessing') % Adding Preprocessing folder path
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\audio')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\mTRF-Toolbox\mtrf\')
-
 % %% PRE-PROCESSING
 % o0_setupscript_trf
 % o0_xdftoset_trf
@@ -46,153 +43,119 @@ addpath('C:\Users\icbmadmin\Documents\GitLabRep\mTRF-Toolbox\mtrf\')
 %     temp_dat(:,:,:,k) = EEG_epoch.data; 
 % end
 % 
-% 
 % %% Save relevant variables before proceeding
 % save('C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP\Relevant Variables\Relevant_Variables.mat', 'EEG');
-
 %% Continue once you have a running pre-processing pipeline
 % Load the saved variables if needed
 load('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Relevant Variables\Relevant_Variables.mat');
 %% Continue once you have a running pre-processing pipeline
 % Get the final EEG srate
 fs_eeg = EEG.srate;
-
 % Assign the EEG data to the resp variable
 resp = EEG.data;
-
 % Load the audio 
 wavnarrow = load('P001_narrow_audio_strct.mat');
 fs_audio = wavnarrow.audio_strct.srate;
 audio_dat = wavnarrow.audio_strct.data;
-
 %% FEATURE extraction 
 
-%%% Envelope Generation
-% We extract the envelope
-mEnv = mTRFenvelope(double(audio_dat)',fs_audio,fs_eeg); % in order to use the mTRF toolbox the eeg data and stimulus need to be the same length 
-% i.e. the same sample rate
+[stim_Env, stim_Onset] = EnvelopeGenerators(audio_dat, resp, fs_audio, fs_eeg);
 
-% Assign to the stimulus variable
-stim_Env = mEnv;
+% Combine features (e.g., envelope and onset)
+% stim_combined = [stim_Env, stim_Onset];
+% 
+% % Ensure the stim_combined is the same length as resp
+% stim_combined = stim_combined(1:size(resp,2),:);
+% 
+% % Now, stim_combined contains both the envelope and onset features aligned with EEG data.
 
-% Are stim and resp the same length?
-stim_Env = stim_Env(1:size(resp,2),:);
+%% Amplitude binned envelope
+% functionAmplitude_binned_vol1
 
-%%% Onset Generator
-% Resample the audio data to match the EEG sampling rate if not already done
-% if fs_audio ~= fs_eeg
-%     audio_dat_res = resample(audio_dat, fs_eeg, fs_audio);
+% Feature extraction and amplitude binning
+
+% Define the number of bins for amplitude binning
+num_bins = 16; % Number of bins, adjust as needed
+
+% Compute the amplitude range for binning
+min_amp = min(stim_Env(:));
+max_amp = max(stim_Env(:));
+bin_edges = linspace(min_amp, max_amp, num_bins + 1);
+
+% Initialize the binned envelope matrix
+stim_binned = zeros(size(stim_Env));
+
+% Bin the envelope data
+for bin_idx = 1:num_bins
+    bin_mask = (stim_Env >= bin_edges(bin_idx)) & (stim_Env < bin_edges(bin_idx + 1));
+    stim_binned(bin_mask) = bin_idx;
+end
+
+% Convert the binned data to a binary matrix where each column corresponds to a bin
+stim_binned_matrix = zeros(num_bins, length(stim_Env));
+
+for bin_idx = 1:num_bins
+    stim_binned_matrix(bin_idx,:) = (stim_binned == bin_idx);
+end
+
+% Ensure the binned matrix is the same length as resp
+stim_binned_matrix = stim_binned_matrix(:, 1:size(resp, 2));
+%%
+% stim = stim_binned;
+% 
+% 
+% xobs = size(stim',1);
+% yobs = size(resp',1);
+% 
+% % Check equal number of observations
+% if ~isequal(xobs,yobs)
+%     error(['STIM and RESP arguments must have the same number of '...
+%         'observations.'])
 % end
 
-% Threshold-based peak detection on the envelope
-% Adjust the threshold and minimum peak distance based on your data
-threshold = 0.3; % Set a threshold for peak detection
-min_peak_distance = 0.15 * fs_eeg; % Minimum distance between peaks in samples
-
-[onset_peaks, onset_locs] = findpeaks(mEnv, 'MinPeakHeight', threshold, 'MinPeakDistance', min_peak_distance);
-
-% Create onset feature vector
-onsets = zeros(size(mEnv));
-onsets(onset_locs) = 1;
-
-% Trim or pad onset feature to match the length of the EEG data
-stim_Onset = onsets(1:size(resp,2));
-
-
-%%% Plotting the Envelope and Onset
-
-% Extract and create time arrays
-time_array = (0:wavnarrow.audio_strct.pnts-1) / wavnarrow.audio_strct.srate;  % Original time array (seconds)
-time_array_stim = (0:length(stim_Env) - 1) / fs_eeg;  % Time array for the envelope (seconds)
-
-% Define the zoom-in range (in seconds)
-start_window = 2.5;  % Start time in seconds
-end_window = 15;     % End time in seconds
-
-% Plotting with zoom-in for correlation
-figure;
-subplot(3,1,1);
-plot(time_array, audio_dat)
-title('Original Sound')
-xlabel('Time (seconds)')
-ylabel('Amplitude')
-xlim([start_window end_window]);  % Zoom in on the original sound
-
-subplot(3,1,2);
-plot(time_array_stim, stim_Env)
-title('Envelope')
-xlabel('Time (seconds)')
-ylabel('Envelope Amplitude')
-xlim([start_window end_window]);  % Zoom in on the envelope
-hold on
-
-% Plot the detected onsets
-subplot(3,1,3);
-plot((1:length(stim_Onset))/fs_eeg, stim_Onset);
-title('Detected Onsets');
-xlabel('Time (s)');
-ylabel('Onset Detection');
-xlim([start_window end_window]);  
-
-% Mark onsets on the envelope plot for better visualization
-subplot(3,1,2);
-onset_times = find(stim_Onset == 1) / fs_eeg;
-onset_indices = round(onset_times * fs_eeg); % Round to nearest integer
-stem(onset_times, mEnv(onset_indices), 'r');
-legend('Envelope', 'Onsets');
-hold off;
-
-
-
-%% Combine features (e.g., envelope and onset)
-stim_combined = [stim_Env, stim_Onset];
-
-% Ensure the stim_combined is the same length as resp
-stim_combined = stim_combined(1:size(resp,2),:);
-
-% Now, stim_combined contains both the envelope and onset features aligned with EEG data.
-
 %% Using different features to get Accuracies
-features = {stim_Env, stim_Onset, stim_combined};
-feature_names = {'Envelope', 'Onset', 'Envelope+Onset'}; % Names for features
+feature_names = {'Envelope', 'Onset', 'Amplitude-Binned Envelope'};
 
-% Create a new figure for all subplots
+% Add the binned envelope to the features list
+features = {stim_Env, stim_Onset, stim_binned_matrix};
+
+% Using different features to get Accuracies
 figure;
 
 for feature_idx = 1:length(features)
-    
+
     % Assign the current feature set to stim
     stim = features{feature_idx};
-    
+
     % Optionally, display the name of the current feature set
     fprintf('Processing feature set: %s\n', feature_names{feature_idx});
-    
+
     % Ensure the stim is the correct size (matching the length of resp)
-    stim = stim(1:size(resp, 2), :);
+    % stim = stim(:, 1:size(resp, 2));
 
     % Model hyperparameters
     tmin = -100;
     tmax = 400;
     trainfold = 10;
     testfold = 1;
-    
+
     % Partition the data into training and test data segments
-    [strain, rtrain, stest, rtest] = mTRFpartition(stim, resp', trainfold, testfold);
+    [strain, rtrain, stest, rtest] = mTRFpartition(stim', resp', trainfold, testfold);
 
     % Compute model weights
     model = mTRFtrain(strain, rtrain, fs_eeg, 1, tmin, tmax, 0.05, 'verbose', 0);
-        
+
     % Test the model on unseen neural data
     [~, stats] = mTRFpredict(stest, rtest, model, 'verbose', 0);
-    
-    % Plotting in a 2x3 grid
+
+    % Plotting in a 3x2 grid
     % Model weights
     subplot(3, 2, feature_idx * 2 - 1)
     plot(model.t, squeeze(model.w(1, :, :))); % model weights
     title(sprintf('Weights (%s)', feature_names{feature_idx}))
     ylabel('a.u.')
     xlabel('time in ms.')
-    
+
     % GFP (Global Field Power)
     subplot(3, 2, feature_idx * 2)
     boxplot(stats.r) % channel correlation values
@@ -203,170 +166,64 @@ end
 % Adjust the layout
 sgtitle('Feature Comparisons') % Add a super title to the figure
 
-%% Amplitude binned envelope
+%% Plotting with zoom-in for correlation
 
-
-
-%% Feature extraction and amplitude binning
-
-% % Define the number of bins for amplitude binning
-% num_bins = 5; % Number of bins, adjust as needed
-% 
-% % Compute the amplitude range for binning
-% min_amp = min(stim_Env(:));
-% max_amp = max(stim_Env(:));
-% bin_edges = linspace(min_amp, max_amp, num_bins + 1);
-% 
-% % Initialize the binned envelope matrix
-% stim_binned = zeros(size(stim_Env));
-% 
-% % Bin the envelope data
-% for bin_idx = 1:num_bins
-%     bin_mask = (stim_Env >= bin_edges(bin_idx)) & (stim_Env < bin_edges(bin_idx + 1));
-%     stim_binned(bin_mask) = bin_idx;
-% end
-% 
-% % Convert the binned data to a binary matrix where each column corresponds to a bin
-% stim_binned_matrix = zeros(size(stim_Env, 1), num_bins);
-% 
-% for bin_idx = 1:num_bins
-%     stim_binned_matrix(:, bin_idx) = (stim_binned == bin_idx);
-% end
-% 
-% % Ensure the binned matrix is the same length as resp
-% stim_binned_matrix = stim_binned_matrix(1:size(resp, 2), :);
-% 
-% % Update feature names
-% feature_names = {'Envelope', 'Amplitude-Binned Envelope'};
-% 
-% % Add the binned envelope to the features list
-% features = {stim_Env, stim_binned_matrix};
-% 
-% % Using different features to get Accuracies
-% figure;
-% 
-% for feature_idx = 1:length(features)
-% 
-%     % Assign the current feature set to stim
-%     stim = features{feature_idx};
-% 
-%     % Optionally, display the name of the current feature set
-%     fprintf('Processing feature set: %s\n', feature_names{feature_idx});
-% 
-%     % Ensure the stim is the correct size (matching the length of resp)
-%     stim = stim(1:size(resp, 2), :);
-% 
-%     % Model hyperparameters
-%     tmin = -100;
-%     tmax = 400;
-%     trainfold = 10;
-%     testfold = 1;
-% 
-%     % Partition the data into training and test data segments
-%     [strain, rtrain, stest, rtest] = mTRFpartition(stim, resp', trainfold, testfold);
-% 
-%     % Compute model weights
-%     model = mTRFtrain(strain, rtrain, fs_eeg, 1, tmin, tmax, 0.05, 'verbose', 0);
-% 
-%     % Test the model on unseen neural data
-%     [~, stats] = mTRFpredict(stest, rtest, model, 'verbose', 0);
-% 
-%     % Plotting in a 3x2 grid
-%     % Model weights
-%     subplot(2, 2, feature_idx * 2 - 1)
-%     plot(model.t, squeeze(model.w(1, :, :))); % model weights
-%     title(sprintf('Weights (%s)', feature_names{feature_idx}))
-%     ylabel('a.u.')
-%     xlabel('time in ms.')
-% 
-%     % GFP (Global Field Power)
-%     subplot(2, 2, feature_idx * 2)
-%     boxplot(stats.r) % channel correlation values
-%     title(sprintf('GFP (%s)', feature_names{feature_idx}))
-%     ylabel('correlation')
-% end
-% 
-% % Adjust the layout
-% sgtitle('Feature Comparisons') % Add a super title to the figure
-
-
-
-
-
-
-
-
-
-%%
-%%% Logarithmic Binning
-% Define dB bin edges (in dB)
-db_bin_edges = [8, 16, 24, 32, 40, 48, 56, 64]; % Example edges in dB
-
-% Convert dB bin edges to linear scale
-linear_bin_edges = 10 .^ (db_bin_edges / 20);
-
-% Normalize bin edges to the range [0, 1]
-linear_bin_edges = (linear_bin_edges - min(linear_bin_edges)) / (max(linear_bin_edges) - min(linear_bin_edges));
-
-% Bin the envelope data using histcounts
-[~, bin_indices] = histcounts(stim_Env, linear_bin_edges);
-
-% Initialize the binned envelope matrix
-stim_binned_matrix = zeros(size(stim_Env, 1), length(db_bin_edges));
-
-% Bin the envelope data
-for bin_idx = 1:length(db_bin_edges)
-    % Create a binary matrix where each column corresponds to a bin
-    stim_binned_matrix(bin_idx, : ) = (bin_indices == bin_idx);
-end
-
-% Ensure the binned matrix is the same length as resp
-stim_binned_matrix = stim_binned_matrix(1:size(resp, 2), :);
-
-
-%%
-% Define time arrays
-time_audio = (0:length(audio_dat) - 1) / fs_audio;  % Time array for original audio
-time_env = (0:length(stim_Env) - 1) / fs_eeg;       % Time array for envelope and binned envelope
+% Plotting the Envelope and Onset
+% Extract and create time arrays
+time_array = (0:wavnarrow.audio_strct.pnts-1) / wavnarrow.audio_strct.srate;  % Original time array (seconds)
+time_array_stim = (0:length(stim_Env) - 1) / fs_eeg;  % Time array for the envelope (seconds)
 
 % Define the zoom-in range (in seconds)
 start_window = 2.5;  % Start time in seconds
 end_window = 15;     % End time in seconds
 
-% Plotting time series
-figure;
-
-% Plot original sound
-subplot(3, 1, 1);
-plot(time_audio, audio_dat);
-title('Original Sound');
-xlabel('Time (seconds)');
-ylabel('Amplitude');
-xlim([start_window end_window]);  % Zoom in on the original sound
-
-% Plot envelope
-subplot(3, 1, 2);
-plot(time_env, stim_Env);
-title('Envelope');
-xlabel('Time (seconds)');
-ylabel('Envelope Amplitude');
-xlim([start_window end_window]);  % Zoom in on the envelope
-
-% Plot amplitude-binned envelope
-subplot(3, 1, 3);
-imagesc(time_env, 1:length(db_bin_edges), stim_binned_matrix'); % Transpose for correct orientation
-axis xy; % Correct orientation of y-axis
-title('Amplitude-Binned Envelope');
-xlabel('Time (seconds)');
-ylabel('Amplitude Bin');
-xlim([start_window end_window]);  % Zoom in on the envelope
-colorbar; % Add colorbar for bin representation
-
-% Adjust the layout
-sgtitle('Time Series of Original Sound, Envelope, and Amplitude-Binned Envelope'); % Add a super title to the figure
-
 
 %%
+
+% Populate the matrix_bin with amplitude values
+bins= 0:num_bins-1;
+plot_matrix_bin = repmat(bins(:), 1, length(stim_binned)); 
+plot_matrix_bin = plot_matrix_bin + stim_binned_matrix;
+
+%%
+figure;
+subplot(3,1,1);
+plot(time_array, audio_dat)
+title('Original Sound')
+xlabel('Time (s)');
+ylabel('Amplitude (db)')
+xlim([start_window end_window]);  % Zoom in on the original sound
+
+subplot(3,1,2);
+plot(time_array_stim, stim_Env)
+title('Envelope')
+xlabel('Time (s)');
+ylabel('Envelope Amplitude')
+xlim([start_window end_window]);  % Zoom in on the envelope
+hold on
+
+% Mark onsets on the envelope plot for better visualization
+subplot(3,1,2);
+onset_times = find(stim_Onset == 1) / fs_eeg;
+onset_indices = round(onset_times * fs_eeg); % Round to nearest integer
+stem(onset_times, stim_Env(onset_indices), 'r');
+legend('Envelope', 'Onsets');
+hold off;
+
+% Mark onsets on the envelope plot for better visualization
+subplot(3,1,3);
+% plot((1:length(stim_binned))/fs_eeg, stim_binned_matrix);
+plot((1:length(plot_matrix_bin))/fs_eeg, plot_matrix_bin);
+title('Binned stim');
+xlabel('Time (s)');
+ylabel('Binned stim');
+xlim([start_window end_window]);
+ylim([-2 17]);
+
+%% (!) Here
+
+
+
 %%% Logarithmic Binning
 % Define dB bin edges (in dB)
 db_bin_edges = [8, 16, 24, 32, 40, 48, 56, 64]; % Example edges in dB
@@ -395,42 +252,67 @@ stim_binned_matrix = stim_binned_matrix ./ max(stim_binned_matrix, [], 1);
 % Ensure the binned matrix is the same length as resp
 stim_binned_matrix = stim_binned_matrix(1:size(resp, 2), :);
 
-% Define time arrays
-time_audio = (0:length(audio_dat) - 1) / fs_audio;  % Time array for original audio
-time_env = (0:length(stim_Env) - 1) / fs_eeg;       % Time array for envelope and binned envelope
 
-% Define the zoom-in range (in seconds)
-start_window = 2.5;  % Start time in seconds
-end_window = 15;     % End time in seconds
 
-% Plotting time series
-figure;
+%% Modification for numbers in beetween
+amp_conti = [2, 3.2, 4.1, 0.1, 3.3, 4.4, 5.5, 44.5, 0.6, 8, 0, 3, 0, 0.6, 4.3, 5, 1, 3, 9, 5, 7, ...
+    6, 1, 8, 8.5, 11, 2, 13.5, 2, 7, 12, 12, 12, 11, 10];
 
-% Plot original sound
+bins = 0:8:64;
+%%
+load('short_audio.mat')
+load('short_envelope.mat')
+
+audio = short_audio;
+amp_conti = short_envelope';
+bins = [0, 8, 16, 24, 32, 40, 48, 56, 64];
+%%
+
+[plot_matrix_bin, matrix_bin] = ABenvelope(amp_conti, bins);
+
+% identify max and min value
+min_val = min(amp_conti); max_val = max(bins);
+
+% time array
+t = 1:length(amp_conti);
+
+% Plot Modified Amplitude Levels
+% figure;
 subplot(3, 1, 1);
-plot(time_audio, audio_dat);
-title('Original Sound');
-xlabel('Time (seconds)');
+plot(t, audio);
+title('Amplitude over Time');
+xlabel('Time');
 ylabel('Amplitude');
-% xlim([start_window end_window]);  % Zoom in on the original sound
+% ylim([min_val-1, max_val+4]);
 
-% Plot envelope
 subplot(3, 1, 2);
-plot(time_env, stim_Env);
-title('Envelope');
-xlabel('Time (seconds)');
-ylabel('Envelope Amplitude');
-% xlim([start_window end_window]);  % Zoom in on the envelope
+plot(t, amp_conti);
+title('Modified Amplitude Levels over Time');
+xlabel('Time');
+ylabel('Amplitude');
+% ylim([min_val-1, max_val+4]);
 
-% Plot amplitude-binned envelope
 subplot(3, 1, 3);
-imagesc(time_env, db_bin_edges, stim_binned_matrix'); % Transpose for correct orientation
-% axis xy; % Correct orientation of y-axis
-title('Amplitude-Binned Envelope');
-xlabel('Time (seconds)');
-ylabel('Amplitude Bin');
-% xlim([start_window end_window]);  % Zoom in on the envelope
-% colorbar; % Add colorbar for bin representation
+plot(t, plot_matrix_bin);
+title('Modified Amplitude Levels over Time');
+xlabel('Time');
+ylabel('Amplitude');
+ylim([min_val-1, max_val+4]);
 
-% Adjust the layout
-sgtitle('Time Series of Original Sound, Envelope, and Amplitude-Binned Envelope'); % Add a super title to the figure
+%% function
+function [plot_matrix_bin, matrix_bin] = ABenvelope(amp_conti, bins)
+    % Initialize variables
+    matrix_bin = zeros(length(bins), length(amp_conti));
+    % Update the matrix_bin based on the given logic
+    for step_counter = 1:length(amp_conti)
+        amp_value = round(amp_conti(step_counter));         % Round amplitude value to nearest integer
+        [~, closest_bin_idx] = min(abs(bins - amp_value));  % Find the closest bin to the amplitude value
+        matrix_bin(closest_bin_idx, step_counter) = matrix_bin(closest_bin_idx, step_counter) + 1; % Add 1 to the current amplitude value
+    end
+
+    % Populate the matrix_bin with amplitude values
+    plot_matrix_bin = repmat(bins(:), 1, length(amp_conti)); 
+    plot_matrix_bin = plot_matrix_bin + matrix_bin;
+end
+
+
