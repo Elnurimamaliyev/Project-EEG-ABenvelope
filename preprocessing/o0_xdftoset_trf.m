@@ -23,7 +23,7 @@ for s = 1:length(sbj) %loops through all participants
 
         %% EEG data
         %load the EEG data
-        EEG = pop_loadset('P001_ica_narrow_game_added_trigger.set ','C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP\Data\raw_data');
+        EEG = pop_loadset('P001_ica_narrow_game_added_trigger.set ', raw_data_path);
 
         %load the channel layout here
         if size(EEG.data,1)>24

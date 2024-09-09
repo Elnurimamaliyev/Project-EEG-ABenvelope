@@ -5,12 +5,12 @@
 
 %% Paths
 % Data and functions
-% fig_path = char('C:\Users\icbmadmin\Documents\GitLabRep\PProject)TRFPP\Figs\');       % folder to save all my figures later
+% fig_path = char('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Figures\');       % folder to save all my figures later
 
-chan_path = 'C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP\Data\chan_info\';  % location of channel information 
-MAINPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP';                     % main path to the project folders 
-DATAPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP\Data';                % where the files will be saved
-raw_data_path = 'C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP\Data\raw_data\'; % where the raw data is stored
+MAINPATH  = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope';                     % main path to the project folders 
+DATAPATH  = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data';                % where the files will be saved
+chan_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Data\chan_info\';  % location of channel information 
+raw_data_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Data\raw_data\'; % where the raw data is stored
 task = {'narrow'}; 
 
 % Toolboxes
