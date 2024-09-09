@@ -1,1 +1,1 @@
-Here will be README file
+This Folder contains scripts for generating different sound features and using them to analyse EEG.
