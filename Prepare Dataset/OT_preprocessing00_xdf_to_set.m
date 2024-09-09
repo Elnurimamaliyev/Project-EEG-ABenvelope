@@ -13,7 +13,7 @@ for s = 1:length(sbj)
      else
          cd(sbj{s});
      end
-     
+    
     for k = 1:length(task)
 
         %load the EEG data
@@ -125,12 +125,8 @@ for s = 1:length(sbj)
             EEG_game.setname = [sbj{i},'_',filename];
             pop_saveset(EEG_game, 'filename',filename);
         end
-        
-        
-        
-        
 
-        
+
         %full 
         filename = [task{k},'_eeg'];
         EEG.setname = [sbj{i},'_',filename];
