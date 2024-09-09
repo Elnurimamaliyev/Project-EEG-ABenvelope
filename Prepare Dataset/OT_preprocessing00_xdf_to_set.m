@@ -2,6 +2,8 @@
 
 OT_setup
 for s = 1:length(sbj)
+     disp(['Started processing Subject ' num2str(s) ': ' sbj{s}]);
+
      %move to the path where the data is to be saved
      cd(DATAPATH)
      %check if a folder structure exists, and if not, make one
@@ -28,29 +30,27 @@ for s = 1:length(sbj)
         
         
         
-        %load the audio_stream
+        %% load the audio_stream (takes up to 5-10 minutes)
         audio_strct = pop_loadxdf([raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'],...
             'streamname', 'TetrisAudio', 'exclude_markerstreams', {});
-        
+
         %process the audio 
         audio1 = double(audio_strct.data);     % Datapoints are stored in int16
         audio2 = (audio1(1,:)+audio1(2,:))/2;  % Stereo to mono
         audio3 = audio2/3276.7;
-        
+
         audio_strct.data = audio3;
-        
+
         %epoch the audio 
         EP_off = (audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency - audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency)/audio_strct.srate;
         audio_strct = pop_epoch(audio_strct, {[task{k},'_game_start']}, [0  EP_off]);
-        
-       
-        
+
         %save the audio structure data
         save([sbj{s},'_',task{k},'_audio.mat'],'audio3');
         save([sbj{s},'_',task{k},'_audio_strct.mat'],'audio_strct');
-        
-        
-        
+
+
+        %% Add events
         for e = 1:size(EEG.event,2)
             % Find events with a 'odd_tone' in their name
             if ismember('odd_tone', EEG.event(e).type)
@@ -86,6 +86,7 @@ for s = 1:length(sbj)
             end
         end
         
+        %% Data parcellation 
         %separate the data set into eyes open, eyes closed and actual game
         %start
         %closed 
@@ -112,6 +113,7 @@ for s = 1:length(sbj)
             
         end
         
+        %actual data  of interest
         if sum(ismember({EEG.event.type}, 'game_end')) > 0 && sum(ismember({EEG.event.type}, [task{k},'_game_start'])) > 0
             
             %full data set

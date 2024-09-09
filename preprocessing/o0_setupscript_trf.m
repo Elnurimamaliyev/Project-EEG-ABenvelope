@@ -8,9 +8,9 @@
 % fig_path = char('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Figures\');       % folder to save all my figures later
 
 MAINPATH  = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope';                     % main path to the project folders 
-DATAPATH  = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data';                % where the files will be saved
-chan_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Data\chan_info\';  % location of channel information 
-raw_data_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Data\raw_data\'; % where the raw data is stored
+DATAPATH  = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\UserFirst4Test';                % where the files will be saved
+chan_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\UserFirst4Test\Data\chan_info\';  % location of channel information 
+raw_data_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\UserFirst4Test\Data\raw_data\'; % where the raw data is stored
 task = {'narrow'}; 
 
 % Toolboxes

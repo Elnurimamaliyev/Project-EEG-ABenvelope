@@ -65,7 +65,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "19f8b6af28c2f3eb",
@@ -134,7 +135,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 353.5
+    "width": 353.5,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -147,6 +149,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "a6bae4d631f0bdc5",
-  "lastOpenFiles": []
+  "active": "6b3ec24d375cc537",
+  "lastOpenFiles": [
+    "Prepare Dataset/OT_setup.asv",
+    "Thorge/AB_envelope.m",
+    "Thorge/onset_detection.m"
+  ]
 }
