@@ -105,17 +105,15 @@ for s=1:length(sbj)
 
     %load the two data sets and add the ICA weights
     for i=1:(length(file)) %loop over the two different conditions
-        
         EEG = pop_loadset(fullfile(PATH,file{i})); %load the set of each condition
 
         %since the ICA weights were trained on a subset of channels, if we
         %want to add the weights, we first need to remove the bad channels
         %from earlier again
+
         if ~isempty(badchan) %check if we detected bad channels earlier
-            
             badch = {badchan.labels};
-            EEG = pop_select(EEG,'nochannel',badch); %remove all the bad channels
-            
+            EEG = pop_select(EEG,'nochannel',badch); %remove all the bad channels   
         end
         
         %sanity check

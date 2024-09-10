@@ -2,7 +2,7 @@
 
 OT_setup
 for s = 1:length(sbj)
-     disp(['Started processing Subject ' num2str(s) ': ' sbj{s}]);
+     disp(['Started processing Subject: ' sbj{s}]);
 
      %move to the path where the data is to be saved
      cd(DATAPATH)
@@ -13,7 +13,7 @@ for s = 1:length(sbj)
      else
          cd(sbj{s});
      end
-    
+
     for k = 1:length(task)
 
         %load the EEG data
@@ -25,11 +25,11 @@ for s = 1:length(sbj)
         else
             EEG = pop_chanedit(EEG, 'load',{[chan_path,'mobile24.elp'],'filetype','autodetect'});
         end
-        
+
         EEG = pop_select( EEG, 'channel',{'Fp1','Fp2','Fz','F7','F8','FC1','FC2','Cz','C3','C4','T7','T8','CPz','CP1','CP2','CP5','CP6','TP9','TP10','Pz','P3','P4','O1','O2'});
-        
-        
-        
+
+
+
         %% load the audio_stream (takes up to 5-10 minutes)
         audio_strct = pop_loadxdf([raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'],...
             'streamname', 'TetrisAudio', 'exclude_markerstreams', {});
@@ -85,13 +85,13 @@ for s = 1:length(sbj)
                 EEG.event(e).type = 'irr_sound';
             end
         end
-        
+
         %% Data parcellation 
         %separate the data set into eyes open, eyes closed and actual game
         %start
         %closed 
         if sum(ismember({EEG.event.type}, 'eyes_closed_end')) > 0 && sum(ismember({EEG.event.type}, 'eyes_closed_start')) > 0
-            
+
             eyes_c = (EEG.event(find(strcmpi({EEG.event.type}, 'eyes_closed_end'))).latency - EEG.event(find(strcmpi({EEG.event.type}, 'eyes_closed_start'))).latency)/EEG.srate;
             EEG_eyesc = pop_epoch(EEG, {'eyes_closed_start'}, [0  eyes_c], 'epochinfo', 'yes');
             %save as new data sets
@@ -99,9 +99,9 @@ for s = 1:length(sbj)
             filename = [task{k},'_eyes_closed'];
             EEG_eyesc.setname = [sbj{i},'_',filename];
             pop_saveset(EEG_eyesc, 'filename',filename);
-            
+
         end
-        
+
         if sum(ismember({EEG.event.type}, 'eyes_open_end')) > 0 && sum(ismember({EEG.event.type}, 'eyes_open_start')) > 0
             %open
             eyes_o = (EEG.event(find(strcmpi({EEG.event.type}, 'eyes_open_end'))).latency - EEG.event(find(strcmpi({EEG.event.type}, 'eyes_open_start'))).latency)/EEG.srate;
@@ -110,16 +110,16 @@ for s = 1:length(sbj)
             filename = [task{k},'_eyes_open'];
             EEG_eyeso.setname = [sbj{i},'_',filename];
             pop_saveset(EEG_eyeso, 'filename',filename);
-            
+
         end
-        
+
         %actual data  of interest
         if sum(ismember({EEG.event.type}, 'game_end')) > 0 && sum(ismember({EEG.event.type}, [task{k},'_game_start'])) > 0
-            
+
             %full data set
             EP_game = (EEG.event(find(strcmpi({EEG.event.type}, 'game_end'))).latency - EEG.event(find(strcmpi({EEG.event.type}, [task{k},'_game_start']))).latency)/EEG.srate;
             EEG_game = pop_epoch(EEG, {[task{k},'_game_start']}, [0  EP_game], 'epochinfo', 'yes');
-            
+
             %game
             filename = [task{k},'_game_added_trigger'];
             EEG_game.setname = [sbj{i},'_',filename];
@@ -131,7 +131,7 @@ for s = 1:length(sbj)
         filename = [task{k},'_eeg'];
         EEG.setname = [sbj{i},'_',filename];
         pop_saveset(EEG, 'filename',filename);
-        
+
     end
     cd('..')
 end
