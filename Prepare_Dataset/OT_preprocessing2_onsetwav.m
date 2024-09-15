@@ -1,8 +1,11 @@
 %% script to prepare the audio files for the onset detection master
 %MAINPATH = '\\daten.uni-oldenburg.de\psychprojects$\Neuro\Thorge Haupt\data\Thorge\';
 
-MAINPATH = 'O:\projects\thh_ont\auditory-attention-in-complex-work-related-auditory-envrionments\data files'
-addpath(genpath(MAINPATH));
+% MAINPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\';
+DATAPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\';
+
+addpath(DATAPATH);
+
 sbj =    {'P001', 'P002','P003','P005', 'P006','P007','P008','P009',...
     'P010','P012','P013', 'P014','P015','P016','P017', 'P018',...
     'P019','P020','P021','P022'};
@@ -14,7 +17,7 @@ for s=1:length(sbj)
     
     sb = sbj{s};
     %setup path file
-    PATH = fullfile(MAINPATH, sb);
+    PATH = fullfile(DATAPATH, sb);
     cd(PATH)   
     
     %loads the audio strct with the game audio sample

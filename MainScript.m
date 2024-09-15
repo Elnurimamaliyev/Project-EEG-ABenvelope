@@ -14,45 +14,75 @@
 %% Cleaning
 clear, clc;
 %% Add Main path
-addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope')
-addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\preprocessing') % Adding Preprocessing folder path
-addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\audio')
-addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\')
-addpath('C:\Users\icbmadmin\Documents\GitLabRep\mTRF-Toolbox\mtrf\')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Prepare_Dataset\')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Functions')
 %% PRE-PROCESSING
+OT_setup
 % o0_setupscript_trf
 % o0_xdftoset_trf
 % o1_preICA_trf
-%% Load the raw (unpreprocessed) data
-% EEG = pop_loadset('P001_ica_narrow_game_added_trigger.set ','C:\Users\icbmadmin\Documents\GitLabRep\PProject_TRFPP\TRFPP');
-%% compute the ERP for the narow condition
-% for k = 1:length(task)
-%     %load the EEG data
-%     EEG = []; 
-%     [EEG,PATH] = o2_preprocessing(1,k,sbj,20);
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\preprocessing') % Adding Preprocessing folder path
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\mTRF-Toolbox\mtrf\')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Functions\')
+addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\Preprocessed_Data\')
+%% Load the raw (unpreprocessed) data and Save as different variables
+% Loop through subjects and tasks
+% for s = 1:length(sbj)
+%     for k = 1:length(task)
+%         %load the EEG data
+%         % EEG = []; 
+%         % Load the EEG data for each subject and task
+%         [EEG, PATH] = o2_preprocessing(s, k, sbj, 20);
 % 
-%     %select the stimulus of interest (as named in the EEG.event structure)
-%     stim_label = 'alarm_tone_post';
+%         % Select the stimulus of interest (as named in the EEG.event structure)
+%         stim_label = 'alarm_tone_post';
 % 
-%     %epoch the data with respect to the alarm tone
-%     EEG_epoch = pop_epoch(EEG,{stim_label},[-1 2]) 
+%         % Epoch the data with respect to the alarm tone
+%         EEG_epoch = pop_epoch(EEG,{stim_label},[-1 2]) 
 % 
-%     %save the data 
-%     temp_dat(:,:,:,k) = EEG_epoch.data; 
+%         % Save the data for the current subject and task
+%         temp_dat(:,:,:,k) = EEG_epoch.data;
+% 
+%         % Define the filename for saving the preprocessed data
+%         EEGFileName = sprintf('Preprocessed_EEG_Subject_%d_Task_%d.mat', s, k);
+% 
+%         % Save the preprocessed EEG data for each subject and task
+%         save(fullfile('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\Preprocessed_Data\', EEGFileName), 'EEG');
+% 
+%     end
 % end
-%% Save relevant variables before proceeding
-% save('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Relevant Variables\Relevant_Variables.mat', 'EEG'); clear;
 %% Continue once you have a running pre-processing pipeline
-load('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Relevant Variables\Relevant_Variables.mat');    % Load the saved variables if needed
-%% Continue once you have a running pre-processing pipeline
-fs_eeg = EEG.srate;         % Get the final EEG sample rate
-resp = EEG.data';           % Assign the EEG data to the resp variable
+% Load the EEG
+s = 20;
+k = 2;
 
-% Load the audio 
-wavnarrow = load('P001_narrow_audio_strct.mat');
-fs_audio = wavnarrow.audio_strct.srate; % Get the final audio sample rate
-audio_dat = wavnarrow.audio_strct.data; % Assign the audio data to the audio_dat variable
-%% FEATURE extraction 
+fprintf('Subject_%d_Task_%d', s, k)
+
+% for s = 1:length(sbj)
+%     for k = 1:length(task)
+        % Load the EEG
+        EEGFileName = sprintf('Preprocessed_EEG_Subject_%d_Task_%d.mat', s, k);
+        load(EEGFileName);          % Load the EEG
+
+        % extract the EEG features
+        fs_eeg = EEG.srate;         % Get the final EEG sample rate
+        resp = EEG.data';           % Assign the EEG data to the resp variable
+        
+        % Load the audio 
+        AudioFileName = [sbj{s},'_',task{k},'_audio_strct.mat'];
+        wav = load(AudioFileName); % for instance P001_narrow_audio_strct.mat
+        fs_audio = wav.audio_strct.srate; % Get the final audio sample rate
+        audio_dat = wav.audio_strct.data; % Assign the audio data to the audio_dat variable
+    
+%     end
+% end
+
+%%%%% Continue once you have a running pre-processing pipeline
+
+%%% FEATURE extraction 
 
 %%% Original Envelope Feature Generation   
 stim_Env = mTRFenvelope(double(audio_dat)', fs_audio, fs_eeg); % Extract the envelope using the mTRF toolbox
@@ -68,34 +98,38 @@ binEdges_dB = linspace(8, 64, num_bins + 1);
 
 %%% Onset Feature
 stim_Onset = OnsetGenerator(stim_Env); 
+% 
+% %%% Combine Top matrix of ABenvelope with Onset
+% CmbOnsPlusTopABenv = stim_ABenv; CmbOnsPlusTopABenv(:,1) = stim_Onset;  % ABEnvelope and Onset Concatinated (BinNum, all)
 
-%%% Combine Top matrix of ABenvelope with Onset
-CmbOnsPlusTopABenv = stim_ABenv; CmbOnsPlusTopABenv(:,1) = stim_Onset;  % ABEnvelope and Onset Concatinated (BinNum, all)
-%% Amplitude Dencity
 
-% Count amplitude density of each bin (Using histcounts)
-[DbCounts, ~, ~] = histcounts(NormEnv, NormBinEdges');
+%%%%% Amplitude Density
 
-% Plot Histogram
-figure;
-histogram('BinEdges',binEdges_dB,'BinCounts',DbCounts);
+% % Count amplitude density of each bin (Using histcounts)
+% [DbCounts, ~, ~] = histcounts(NormEnv, NormBinEdges');
+% 
+% % Plot Histogram
+% figure;
+% histogram('BinEdges',binEdges_dB,'BinCounts',DbCounts);
+% 
+% % Title, labels and flip, add grid
+% set(gca,'view',[90 -90])
+% xlabel('Bin Edges (dB)'); ylabel('Counts');
+% title('Histogram of Frequency Counts');
+% grid on;
 
-% Title, labels and flip, add grid
-set(gca,'view',[90 -90])
-xlabel('Bin Edges (dB)'); ylabel('Counts');
-title('Histogram of Frequency Counts');
-grid on;
-
-%% Ready Features
+% Ready Features
 stim_Env;           % stim_Env - Original Envelope (1, all)
 stim_ABenv;         % stim_ABenv - Amplitude-Binned Envelope (BinNum, all)
-CmbOnsPlusTopABenv;    % Cmb_Ons_ABenvTop_C - ABEnvelope and Onset Concatinated (BinNum, all)
+% CmbOnsPlusTopABenv;    % Cmb_Ons_ABenvTop_C - ABEnvelope and Onset Concatinated (BinNum, all)
 
-%% Using different features to get Accuracies
-feature_names = {'Orig Env (norm)', 'ABenv', 'CmbOnsPlusTopABenv'};
+% Using different features to get Accuracies
+feature_names = {'Orig Env (norm)', 'ABenv'};
+% feature_names = {'Orig Env (norm)', 'ABenv', 'CmbOnsPlusTopABenv'};
 
 % Add the binned envelope to the features list
-features = {NormEnv, stim_ABenv, CmbOnsPlusTopABenv};
+% features = {NormEnv, stim_ABenv, CmbOnsPlusTopABenv};
+features = {NormEnv, stim_ABenv};
 
 % Using different features to get Accuracies
 figure;
@@ -141,90 +175,92 @@ end
 % Adjust the layout
 sgtitle('Feature Comparisons') % Add a main title to the figure
 
-%% V2 - Using different features to get Accuracies
-feature_names = {'Orig Env (norm)', 'ABenv', 'CmbOnsPlusTopABenv'};
-
-% Add the binned envelope to the features list
-features = {NormEnv, stim_ABenv, CmbOnsPlusTopABenv};
-
-% Using different features to get Accuracies
-figure;
-
-col_num = length(features); % Dinamic Figure Columns
-
-% Model hyperparameters
-tmin = -100;
-tmax = 400;
-% tmax = 500;
-trainfold = 10;
-testfold = 1;
-
-Dir = 1; %specifies the forward modeling
-
-lambdas = linspace(10e-4,10e4,10);
-
-reg = cell(length(features), 1);
-mod_w = cell(length(features), 1);
-
-for feature_idx = 1:length(features)
-
-    stim = features{feature_idx};  % Assign the current feature set to stim
-    fprintf('Processing feature set: %s\n', feature_names{feature_idx});   % Optionally, display the name of the current feature set
-
-
-
-    % Partition the data into training and test data segments
-    [strain, rtrain, stest, rtest] = mTRFpartition(stim, resp, trainfold, testfold);
-
-
-    %%% z-score the input and output data
-    strainz = strain;
-    stestz = stest;
-    rtrainz = cellfun(@(x) zscore(x, [], 'all'), rtrain, 'UniformOutput', false);
-    rtestz = zscore(rtest, [], 'all');
-
-
-    %%% Use cross-validation to find the optimal regularization parameter
-    fs = EEG.srate;
-    cv = mTRFcrossval(strainz, rtrainz, fs, Dir, tmin, tmax, lambdas, 'Verbose', 0);
-
-    %get the optimal regression parameter
-    l = mean(cv.r,3); %over channels
-    [l_val,l_idx] = max(mean(l,1));
-    l_opt = lambdas(l_idx);
-    
-    % Train the neural model with the optimal regularization parameter
-    model_train = mTRFtrain(strainz, rtrainz, fs, Dir, tmin, tmax, l_opt, 'verbose', 0);
-
-    % Predict the neural data
-    [PRED, STATS] = mTRFpredict(stestz, rtestz, model_train, 'verbose', 0);
-    
-    % Store results
-    reg{feature_idx} = STATS.r;
-    mod_w{feature_idx} = squeeze(model_train.w);
-
-    % Plotting in a col_num x 2 grid
-
-    % Model weights
-    subplot(col_num, 2, feature_idx * 2 - 1)
-    plot(model_train.t, squeeze(model_train.w(1, :, :))); % model weights
-    title(sprintf('Weights (%s)', feature_names{feature_idx}))
-    ylabel('a.u.')
-    xlabel('time in ms.')
-
-    % GFP (Global Field Power)
-    subplot(col_num, 2, feature_idx * 2)
-    boxplot(STATS.r) % channel correlation values
-    title(sprintf('GFP (%s)', feature_names{feature_idx}))
-    ylabel('correlation')
-end
-
-% Adjust the layout
-sgtitle('Feature Comparisons') % Add a main title to the figure
+% %% V2 - Using different features to get Accuracies
+% % feature_names = {'Orig Env (norm)', 'ABenv', 'CmbOnsPlusTopABenv'};
+% feature_names = {'Orig Env (norm)', 'ABenv'};
+% 
+% % Add the binned envelope to the features list
+% % features = {NormEnv, stim_ABenv, CmbOnsPlusTopABenv};
+% features = {NormEnv, stim_ABenv};
+% 
+% % Using different features to get Accuracies
+% figure;
+% 
+% col_num = length(features); % Dinamic Figure Columns
+% 
+% % Model hyperparameters
+% tmin = -100;
+% tmax = 400;
+% % tmax = 500;
+% trainfold = 10;
+% testfold = 1;
+% 
+% Dir = 1; %specifies the forward modeling
+% 
+% lambdas = linspace(10e-4,10e4,10);
+% 
+% reg = cell(length(features), 1);
+% mod_w = cell(length(features), 1);
+% 
+% for feature_idx = 1:length(features)
+% 
+%     stim = features{feature_idx};  % Assign the current feature set to stim
+%     fprintf('Processing feature set: %s\n', feature_names{feature_idx});   % Optionally, display the name of the current feature set
+% 
+% 
+% 
+%     % Partition the data into training and test data segments
+%     [strain, rtrain, stest, rtest] = mTRFpartition(stim, resp, trainfold, testfold);
+% 
+% 
+%     %%% z-score the input and output data
+%     strainz = strain;
+%     stestz = stest;
+%     rtrainz = cellfun(@(x) zscore(x, [], 'all'), rtrain, 'UniformOutput', false);
+%     rtestz = zscore(rtest, [], 'all');
+% 
+% 
+%     %%% Use cross-validation to find the optimal regularization parameter
+%     fs = EEG.srate;
+%     cv = mTRFcrossval(strainz, rtrainz, fs, Dir, tmin, tmax, lambdas, 'Verbose', 0);
+% 
+%     %get the optimal regression parameter
+%     l = mean(cv.r,3); %over channels
+%     [l_val,l_idx] = max(mean(l,1));
+%     l_opt = lambdas(l_idx);
+% 
+%     % Train the neural model with the optimal regularization parameter
+%     model_train = mTRFtrain(strainz, rtrainz, fs, Dir, tmin, tmax, l_opt, 'verbose', 0);
+% 
+%     % Predict the neural data
+%     [PRED, STATS] = mTRFpredict(stestz, rtestz, model_train, 'verbose', 0);
+% 
+%     % Store results
+%     reg{feature_idx} = STATS.r;
+%     mod_w{feature_idx} = squeeze(model_train.w);
+% 
+%     % Plotting in a col_num x 2 grid
+% 
+%     % Model weights
+%     subplot(col_num, 2, feature_idx * 2 - 1)
+%     plot(model_train.t, squeeze(model_train.w(1, :, :))); % model weights
+%     title(sprintf('Weights (%s)', feature_names{feature_idx}))
+%     ylabel('a.u.')
+%     xlabel('time in ms.')
+% 
+%     % GFP (Global Field Power)
+%     subplot(col_num, 2, feature_idx * 2)
+%     boxplot(STATS.r) % channel correlation values
+%     title(sprintf('GFP (%s)', feature_names{feature_idx}))
+%     ylabel('correlation')
+% end
+% 
+% % Adjust the layout
+% sgtitle('Feature Comparisons') % Add a main title to the figure
 
 %% Plotting with zoom-in for correlation
 % Extract and create time arrays
-time_array = (0:wavnarrow.audio_strct.pnts-1) / wavnarrow.audio_strct.srate;  % Original time array (seconds)
+time_array = (0:wav.audio_strct.pnts-1) / wav.audio_strct.srate;  % Original time array (seconds)
 time_array_stim = (0:length(stim_Env) - 1) / fs_eeg;  % Time array for the envelope (seconds)
 %% Define the zoom-in range (in seconds)
 start_window = 226;  % Start time in seconds
