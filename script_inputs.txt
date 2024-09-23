@@ -1,0 +1,64 @@
+%-- 9/19/2024 12:44 PM --%
+clc
+OT_setup
+%-- 9/19/2024 01:12 PM --%
+disp(['Started processing Subject: ' sbj{s}]);
+k=2;
+[raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf']
+audio_strct = pop_loadxdf([raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'],...
+'streamname', 'TetrisAudio', 'exclude_markerstreams', {});
+EEGpath = [raw_data_path,'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'];
+EEG = pop_loadxdf(EEGpath, 'streamtype', 'EEG', 'exclude_markerstreams', {});
+%load the channel layout here
+if size(EEG.data,1)>24
+EEG = pop_chanedit(EEG, 'load',{[chan_path,'mobile24_gyro.elp'],'filetype','autodetect'});
+else
+EEG = pop_chanedit(EEG, 'load',{[chan_path,'mobile24.elp'],'filetype','autodetect'});
+end
+EEG = pop_select( EEG, 'channel',{'Fp1','Fp2','Fz','F7','F8','FC1','FC2','Cz','C3','C4','T7','T8','CPz','CP1','CP2','CP5','CP6','TP9','TP10','Pz','P3','P4','O1','O2'});
+audio_strct = pop_loadxdf([raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'],...
+'streamname', 'TetrisAudio', 'exclude_markerstreams', {});
+EEG.pnts/EEG.srate
+ans/60
+%process the audio
+audio1 = double(audio_strct.data);     % Datapoints are stored in int16
+audio2 = (audio1(1,:)+audio1(2,:))/2;  % Stereo to mono
+audio3 = audio2/3276.7;
+audio_strct.data = audio3;
+EP_off = (audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency - audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency)/audio_strct.srate;
+audio_strct = pop_epoch(audio_strct, {[task{k},'_game_start']}, [0  EP_off]);
+EEG.pnts/EEG.srate
+ans/60
+audio_strct = pop_loadxdf([raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'],...
+'streamname', 'TetrisAudio', 'exclude_markerstreams', {});
+A = audio_strct,
+audio_strct.pnts/audio_strct.srate
+ans/60
+%process the audio
+audio1 = double(audio_strct.data);     % Datapoints are stored in int16
+audio2 = (audio1(1,:)+audio1(2,:))/2;  % Stereo to mono
+audio3 = audio2/3276.7;
+audio_strct.data = audio3;
+EP_off = (audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency - audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency)/audio_strct.srate;
+find(strcmpi({audio_strct.event.type}, 'game_end'))
+find(strcmpi({audio_strct.event.type}, 'game_start'))
+find(strcmpi({audio_strct.event.type}, '_game_start'))
+find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))
+audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency
+audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency
+audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency - audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency
+EP_off = (audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency - audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency)/audio_strct.srate;
+EP_off
+EP_game = (EEG.event(find(strcmpi({EEG.event.type}, 'game_end'))).latency - EEG.event(find(strcmpi({EEG.event.type}, [task{k},'_game_start']))).latency)/EEG.srate;
+EP_game
+EEG.event(find(strcmpi({EEG.event.type}, 'game_end'))).latency
+EEG.event(find(strcmpi({EEG.event.type}, [task{k},'_game_start']))).latency
+find(strcmpi({EEG.event.type}, 'game_end'))
+(strcmpi({EEG.event.type}, [task{k},'_game_start']))
+find(strcmpi({EEG.event.type}, [task{k},'_game_start'])))
+find(strcmpi({EEG.event.type}, [task{k},'_game_start']))
+EEG.event(find(strcmpi({EEG.event.type}, 'game_end'))).latency/EEG.srate
+ans*audio_strct.srate
+which pop_loadset
+why
+clc

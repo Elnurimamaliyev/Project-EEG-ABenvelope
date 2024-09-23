@@ -12,7 +12,7 @@
 % Date: 04.09.2024.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Cleaning
-clear, clc;
+clear, clc
 %% Add Main path
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Prepare_Dataset\')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Functions')
@@ -324,40 +324,5 @@ addpath 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Thorge\AB
 %% Will not be used probably
 % UnusedFeatures % Combine other features (e.g., )
 
-
-%%
-nums = [2 5 6 3 3 9 6 5 4 5 3]'
-
-
-mask1 = [1 0 0 0 0 0 1 0 0 1 1]'
-mask2 = [0 1 0 1 1 1 0 0 1 0 1]'
-
-mask = [mask1, mask2]
-
-neww = zeros(length(nums), 2);
-
-for bin_idx = 1:2
-    bin_mask = mask(:, bin_idx);
-    % sum non-zero nums for differrent bins 
-
-    neww(bin_mask==1, bin_idx) = nums(bin_mask==1)
-end
-%%
-nums = [2 5 6 3 3 9 6 5 4 5 3]';
-
-mask1 = [1 0 0 0 0 0 1 0 0 1 1]';
-mask2 = [0 1 0 1 1 1 0 0 1 0 1]';
-
-mask = [mask1, mask2];
-
-neww = zeros(length(nums), 2);
-
-for bin_idx = 1:2
-    bin_mask = mask(:, bin_idx); % Use column for each bin's mask
-    % sum non-zero nums for different bins 
-    neww(bin_mask == 1, bin_idx) = nums(bin_mask == 1);
-end
-
-disp(neww);
 
 

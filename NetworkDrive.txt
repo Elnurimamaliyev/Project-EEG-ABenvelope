@@ -1,3 +1,0 @@
-\\daten.uni-oldenburg.de\psychprojects$\Neuro\Thorge Haupt\data\Elnur
-
-net use P: "\\daten.uni-oldenburg.de\psychprojects$\Neuro\Thorge Haupt\data\Elnur" /user:naar3200 Eldar722
