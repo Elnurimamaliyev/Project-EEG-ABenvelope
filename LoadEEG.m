@@ -1,4 +1,4 @@
-function  [fs_eeg, resp, fs_audio, audio_dat]  = LoadEEG(s, k, sbj, task)
+function  [fs_eeg, resp, fs_audio, audio_dat, EEG]  = LoadEEG(s, k, sbj, task)
         % Load the EEG
         EEGFileName = sprintf('Preprocessed_EEG_Subject_%s_Task_%s.mat', sbj{s}, task{k});
         load(EEGFileName);          % Load the EEG

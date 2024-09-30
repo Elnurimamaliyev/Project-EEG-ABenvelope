@@ -16,6 +16,9 @@ function [stim_ABenv,NormEnv, NormBinEdges, BinEdges] = ABenvelopeGenerator_V1(s
     
     % bin_edges = linspace(min_amp, max_amp, num_bins + 1);
     BinEdges = logspace(log10(min_amp), log10(max_amp), num_bins + 1);
+    
+    % tRANSfer it to linear scale 
+    
     % binEdges_linear = 10.^(binEdges_dB / 20);
 
     BinEdges= BinEdges';

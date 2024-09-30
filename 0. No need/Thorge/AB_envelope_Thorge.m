@@ -5,6 +5,8 @@
 %% load the EEG
 OT_setup
 % [EEG,PATH] = OT_preprocessing(1,1,sbj,20);
+[EEG,PATH] = o2_preprocessing(1,1,sbj,20);
+
 %% Continue once you have a running pre-processing pipeline
 %get the final EEG srate
 fs_eeg = EEG.srate;
@@ -12,23 +14,22 @@ fs_eeg = EEG.srate;
 %assign the EEG data to the resp variable
 resp = EEG.data';
 
-wavnarrow = load('P001_narrow_audio_strct.mat');
+wavnarrow = load('P012_narrow_audio_strct.mat');
 fs_audio = wavnarrow.audio_strct.srate;
 audio_dat = wavnarrow.audio_strct.data;
 
 %FEATURE extraction 
 %we extract the envelope
-%%% Envelope 1: TRF provided
+%% Envelope 1: TRF provided
 menv = mTRFenvelope(double(audio_dat)',fs_audio,fs_eeg);
+
+%% Envelope 2: Manual with Hilbert Transform
+% wav_h = abs( hilbert(double(wavnarrow.audio_strct.data)) );
+% [b,a] = butter(3,15/(wavnarrow.audio_strct.srate/2),'low');
+% wav_hf = filtfilt( b,a,wav_h );
+% wav_hfd = downsample(wav_hf, 441)';
+% menv = wav_hfd;
 %%
-%%% Envelope 2: Manual with Hilbert Transform
-wav_h = abs( hilbert(double(wavnarrow.audio_strct.data)) );
-[b,a] = butter(3,15/(wavnarrow.audio_strct.srate/2),'low');
-wav_hf = filtfilt( b,a,wav_h );
-wav_hfd = downsample(wav_hf, 441)';
-menv = wav_hfd;
-
-
 %normalize the envelope
 menv_norm = (menv - min(menv)) / ...
                       (max(menv) - min(menv));
@@ -60,7 +61,7 @@ end
 
 %normalize each bin 
 env_bin_norm = normalize(env_bin,2,'range');
-
+%%
 figure
 for i = 1:length(binEdges_dB)
     subplot(length(binEdges_dB),1,i)

@@ -7,11 +7,13 @@ addpath(genpath('C:\Users\icbmadmin\Documents\GitLabRep\mTRF-Toolbox\'));       
 % Add Data Pathway
 DATAPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\';
 raw_data_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\raw_data\';
+
 % addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\Preprocessed_Data\')
 addpath(genpath(DATAPATH));
 
-MAINPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\';
 % Add Main paths
+MAINPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\';
+
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Preprocessing\OT')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Preprocessing\Functions')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\FeatureToolbox')
@@ -22,8 +24,8 @@ chan_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\ch
 
 % task = {'wide'};
 % task = {'narrow'};
-% sbj =    {'P002'};
-% sbj =    {'P008', 'P018'};
+% sbj =    {'P019'};
+% sbj =    {'P019', 'P009', 'P006','P020', 'P012'};
 
 task = {'narrow', 'wide'};
 sbj =    {'P001', 'P002','P003','P005', 'P006','P007','P008','P009',...
