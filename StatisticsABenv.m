@@ -2,7 +2,6 @@
 clear
 OT_setup
 addpath("C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data")
-
 load('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\StatsParticipantTask.mat');
 
 
@@ -10,7 +9,7 @@ load('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\StatsParticipantTa
 % Perform Shapiro-Wilk test for Normal Envelopes
 [h_sw_NormEnv, p_sw_NormEnv, stats_sw_NormEnv] = swtest(narrow_norm_env_r_median);
 disp(['Participant ' num2str(s) ', Condition ' task{k} ': Shapiro-Wilk Test (NormEnv) p-value = ' num2str(p_sw_NormEnv)]);
-        
+
 % narrow_norm_env_r_median
 
 % narrow_ab_env_r_median

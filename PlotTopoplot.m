@@ -37,7 +37,7 @@ function PlotTopoplot(StatsParticipantTask, chanlocsData, sbj)
     
     color_lim_global = [0, global_max];  % Limits for Narrow plots
     
-    figure;
+    % figure;
     
     % Plot Narrow
     subplot(2,2,1); title(sprintf('Topoplot (NormEnv), Narrow' ));  % Title based on the feature name
