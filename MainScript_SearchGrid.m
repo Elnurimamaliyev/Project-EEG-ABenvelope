@@ -15,6 +15,11 @@ num_bins_values = [4, 5, 6, 8, 9, 10, 12, 15, 16];
 
 save_directory = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\BinsLoop'; % Specify your desired path here
 
+% Create a parallel pool if not already created
+if isempty(gcp('nocreate'))
+    parpool; % Starts a parallel pool with default number of workers
+end
+
 
 for min_i = 1:length(min_bin_values)
     for max_i = 1:length(max_bin_values)
