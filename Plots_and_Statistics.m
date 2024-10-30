@@ -1,201 +1,18 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The script processes EEG and audio data, extracts features from the 
-% audio (envelope, onset, binned amplitude), trains and evaluates models 
-% using these features, and visualizes the results. % It includes steps 
-% for integrating pre-processed data and performing feature extraction 
-% and model training using the Temporal Response Function (TRF) framework.
-% Ensure that you have a pre-processing pipeline set up to handle your raw 
-% EEG and audio data before running this script.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Created by Thorge Haupt.
-% Modified by Elnur Imamaliyev. 
-% Dataset: \\daten.uni-oldenburg.de\psychprojects$\Neuro\Thorge Haupt\data\Elnur
-% Date: 04.09.2024.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %% Cleaning
 clear; clc;
-
-% Add Main paths
+%% Add Main paths
 OT_setup
-%% Channel selection
-[~, ~, ~, ~, EEG] = LoadEEG(1, 1, sbj, task);
-eeg_channel_labels = {EEG.chanlocs.labels}; selected_channels = {'C3', 'FC2', 'FC1', 'Cz', 'C4'};
-[~, channel_idx] = ismember(selected_channels, eeg_channel_labels);  % Find the indices corresponding to the selected channels in your EEG data
-%% Continue once you have a running pre-processing pipeline
-StatsParticipantTask_equal = struct();
-for s = 1:length(sbj)
-    for k = 1:length(task)
-        fprintf('Subject: %s \nTask: %s\n', sbj{s}, task{k}); % Print Subject and Task
-
-        % Load the EEG and Audio
-        [fs_eeg, full_resp, fs_audio, audio_dat, ~]  = LoadEEG(s, k, sbj, task);
-
-        
-        % Select only 5 channels from response
-        resp = full_resp(:, channel_idx);
-        % resp = full_resp;
-
-        % Original Envelope Feature Generation   
-        Env = mTRFenvelope(double(audio_dat)', fs_audio, fs_eeg); % Extract the envelope using the mTRF toolbox
-        [Env, resp] = size_check(Env, resp); % Ensure matching sizes
-        EnvNorm = normalize(Env,1,'range');
-
-        %%% ABenvelope Feature
-        min_bin = 0; max_bin = 0.98; num_bins = 8;
-        binEdges_dB = linspace(min_bin, max_bin, num_bins + 1)';
-        % binEdges_dB = (0:0.12:1)';
-        % binEdges_dB = normalize(binEdges_dB,1,'range'); 
-
-        binEdges_linear = 10.^(binEdges_dB / 20);
-        NormBinEdges = normalize(binEdges_linear,1,'range');
-        NormBinEdges(end) = NormBinEdges(end) + eps; NormBinEdges(1) = NormBinEdges(1) - eps; % Extend the first and last bin edge slightly
-        
-        % Calculate the histogram counts and bin indices and amplitude density (Using histcounts)
-        [DbCounts, edges, binIndices] = histcounts(EnvNorm, NormBinEdges);
-
-        %%% Histogram of Amplitude Density
-        StatsParticipantTask_equal(s, k).DbCounts = DbCounts;      
-        StatsParticipantTask_equal(s, k).binEdges_dB = binEdges_dB;
-
-        % Initialize the binned envelope matrix
-        ABenv = zeros(size(EnvNorm,1), num_bins);
-
-        % Binned envelope
-        for i = 1:length(binIndices)
-            ABenv(i, binIndices(i)) = EnvNorm(i);
-        end
-
-        % Normalize each bin 
-        ABenvNorm = normalize(ABenv, 1, 'range');
-
-        % % % % Exclude bins 
-        % % Calculate the percentage of values in each bin
-        total_counts = sum(DbCounts); % Total number of values across all bins
-        bin_percentages = (DbCounts / total_counts) * 100; % Percentage of values in each bin
-        low_percentage_threshold = 1;           % Define a threshold for low percentage bins (e.g., less than 5%)
-        high_percentage_bins = find(bin_percentages > low_percentage_threshold);        % Find the bins that have a percentage lower than the threshold
-
-        %%%% Exclude the bins with low percentages
-        ABenvRedBin = ABenv(:, high_percentage_bins);
-
-        %(!)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%% Histogram of Amplitude Density after exclusion
-        % binEdges_dB_new = binEdges_dB(low_percentage_bins(end)+1:end);        % Remove these bins from the bin edges
-        % NormBinEdges_new = NormBinEdges(low_percentage_bins(end)+1:end);        % Remove these bins from the bin edges
-        % [DbCounts_new, edges_2, ~] = histcounts(ABenvNormRedBin, NormBinEdges_new); % size(stim_ABenv_Norm_new, 2)) % Get new bin counts        
-        % figure; histogram('BinEdges',binEdges_dB_new','BinCounts',DbCounts_new); % Plot Histogram
-        % % 
-        % % Title, labels and flip, add grid
-        % set(gca,'view',[90 -90]); xlabel('Bin Edges (dB)'); ylabel('Counts');
-        % title('Histogram of Decibel Counts (After Exclusion)'); grid on;
-        % Save figure
-        % Hist_filename = sprintf('Participant_%s_%s_Histogram', sbj{s},task{k});
-        % save_fig(gcf, 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Figures\Histograms\',Hist_filename)
-        
-        % Onset
-        Onset = OnsetGenerator(Env);
-        
-        % Feature list
-        feature_names = {'EnvNorm', 'ABenv', 'Onset', 'ABons'};
-        features = {EnvNorm, ABenv, Onset, ABons};
-
-        % Model hyperparameters
-        tmin = -100;
-        tmax = 400;         % tmax = 500;
-        trainfold = 10;
-        testfold = 1;
-        Dir = 1;            % specifies the forward modeling
-
-        lambdas = linspace(10e-4, 10e4,10);
-        for feature_idx = 1:length(features)
-            
-            stim = features{feature_idx};  % Assign the current feature set to stim
-            fprintf('Processing feature set: %s\n', feature_names{feature_idx});   % Optionally, display the name of the current feature set
-            % Partition the data into training and test data segments
-            [strain, rtrain, stest, rtest] = mTRFpartition(stim, resp, trainfold, testfold);
-            
-            %%% z-score the input and output data
-            rtrainz = cellfun(@(x) zscore(x, [], 'all'), rtrain, 'UniformOutput', false);
-            rtestz = zscore(rtest, [], 'all');
-            
-            %%% Use cross-validation to find the optimal regularization parameter
-            cv = mTRFcrossval(strain, rtrainz, fs_eeg, Dir, tmin, tmax, lambdas, 'Verbose', 0);
-
-            % Get the optimal regression parameter
-            l = mean(cv.r,3); %over channels
-            [l_val,l_idx] = max(mean(l,1));
-            l_opt = lambdas(l_idx);
-
-            % Compute model weights
-            model = mTRFtrain(strain, rtrainz, fs_eeg, Dir, tmin, tmax, l_opt, 'verbose', 0);
-            % Test the model on unseen neural data
-            [~, stats] = mTRFpredict(stest, rtestz, model, 'verbose', 0);
-
-            % Store mean correlation values
-            if feature_idx == 1                                     %NormEnv
-                StatsParticipantTask_equal(s, k).EnvNormModel = model;
-                StatsParticipantTask_equal(s, k).EnvNormStats = stats;
-            elseif feature_idx == 2                                 %ABenv
-                StatsParticipantTask_equal(s, k).ABenvModel = model;
-                StatsParticipantTask_equal(s, k).ABenvStats = stats;
-            elseif feature_idx == 3                                 %Onset
-                StatsParticipantTask_equal(s, k).OnsetModel = model;
-                StatsParticipantTask_equal(s, k).OnsetStats = stats;
-            elseif feature_idx == 4                                 %ABons
-                StatsParticipantTask_equal(s, k).ABonsModel = model;
-                StatsParticipantTask_equal(s, k).ABonsStats = stats;
-            end
-
-        end
-        
-        % Save Participant and Task IDs
-        StatsParticipantTask_equal(s, k).ParticipantID = s;  % s is the participant ID
-        StatsParticipantTask_equal(s, k).TaskID = k;         % k is the task ID
-
-        % clear stim_Env  stim_ABenv NormEnv NormBinEdges BinEdges num_bins fs_eeg resp fs_audio audio_dat;
-        disp ('Results/Figures are saved!')
-    
-    end
-end
-
-
-
-% % Save the StatsParticipantTask structure to a .mat file
-savePath = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\';
-save(savePath, 'StatsParticipantTask_equal');     % Save the StatsParticipantTask structure to the specified path
-%%
-
-
-
-%% Topoplot
-%%% plot that uses pearson r of normal envelope model and ab envelope over each subject
-% clear
-% OT_setup
-% addpath("C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data")
-% load('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\StatsParticipantTask_new.mat');
-% %%
-% [~, ~, ~, ~, EEG] = LoadEEG(1, 1, sbj, task);
-% 
-% chanlocsData = EEG.chanlocs;
-% figure; PlotTopoplot(StatsParticipantTask_04_09, chanlocsData, sbj);
-% Topoplot_filename = sprintf('Topoplota');
-% save_fig(gcf, 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Figures\Topoplot\',Topoplot_filename)
-
-%%
-OT_setup
-name_struct_new = StatsParticipantTask_0_096_10;
 %%
 % Initialize arrays to store Pearson r values
 % Narrow
 narrow_EnvNormR_mean = NaN(length(sbj), 1);
 narrow_ABenvR_mean = NaN(length(sbj), 1);
-narrow_ABenv_equalR_mean = NaN(length(sbj), 1);
+narrow_ABenvRedBinR_mean = NaN(length(sbj), 1);
 
 % Wide
 wide_EnvNormR_mean = NaN(length(sbj), 1);
 wide_ABenvR_mean = NaN(length(sbj), 1);
-wide_ABenv_equalR_mean = NaN(length(sbj), 1);
+wide_ABenvRedBinR_mean = NaN(length(sbj), 1);
 
 DbCounts_all = cell(length(sbj), length(task)); 
 binEdges_dB_all = cell(length(sbj), length(task));
@@ -221,11 +38,11 @@ for s = 1:length(sbj)
                 wide_ABenvR_mean(s) = mean(name_struct_new(s, k).ABenvStats.r);
             end
         end
-        if isfield(name_struct_new(s, k), 'ABenv_equalStats')
+        if isfield(name_struct_new(s, k), 'ABenvRedBinStats')
             if strcmp(task{k}, 'narrow')
-                narrow_ABenv_equalR_mean(s) = mean(name_struct_new(s, k).ABenv_equalStats.r);
+                narrow_ABenvRedBinR_mean(s) = mean(name_struct_new(s, k).ABenvRedBinStats.r);
             elseif strcmp(task{k}, 'wide')
-                wide_ABenv_equalR_mean(s) = mean(name_struct_new(s, k).ABenv_equalStats.r);
+                wide_ABenvRedBinR_mean(s) = mean(name_struct_new(s, k).ABenvRedBinStats.r);
             end
         end
 
@@ -273,7 +90,7 @@ xlabel('Subjects (sorted by ClassicEnv values)', 'FontWeight', 'bold', 'FontSize
 ylabel("Pearsons' r (mean)");
 ylim([-0.02 0.20]); yticks(-0.02:0.04:0.20);
 
-xlim([0.5 20.5]); 
+xlim([0 21]); 
 title('Wide Condition', 'FontWeight', 'bold'); 
 grid on; hold on;
 yline(chance_level, '--k', 'DisplayName', 'Chance Level (+0.005)', 'LineWidth', 1.5); % Optional: Increase line width for visibility
@@ -308,8 +125,8 @@ DbCounts_all_wide = zeros(20, 8);
 
 for s = 1:length(sbj)
         % Extract DbCounts and binEdges_dB for the current subject and task
-        DbCounts_all_narrow(s,:) = StatsParticipantTask_equal(s, 1).DbCounts;
-        DbCounts_all_wide(s,:) = StatsParticipantTask_equal(s, 2).DbCounts;
+        DbCounts_all_narrow(s,:) = StatsParticipantTask_0(s, 1).DbCounts;
+        DbCounts_all_wide(s,:) = StatsParticipantTask_0(s, 2).DbCounts;
 end
 
 mean_DbCounts_all_narrow = mean(DbCounts_all_narrow, 1);
@@ -408,7 +225,7 @@ end
 
 %%
 % Paired T test for Narrow condition: NormEnv vs ABEnv
-[h_ttest_Narrow, p_ttest_Narrow] = ttest(narrow_ABenv_equalR_mean, narrow_ABenvR_mean);
+[h_ttest_Narrow, p_ttest_Narrow] = ttest(narrow_ABenvRedBinR_mean, narrow_ABenvR_mean);
 if p_ttest_Narrow < 0.05
     disp(['Condition: Narrow ; Wilcoxon signed-rank Test (NormEnv vs ABEnv) p-value = ' num2str(p_ttest_Narrow) ' - Significant difference']);
 else
@@ -416,7 +233,7 @@ else
 end
 
 % Paired T test for Wide condition: NormEnv vs ABEnv
-[h_ttest_Wide,p_ttest_Wide] = ttest(wide_ABenv_equalR_mean, wide_ABenvR_mean);
+[h_ttest_Wide,p_ttest_Wide] = ttest(wide_ABenvRedBinR_mean, wide_ABenvR_mean);
 if p_ttest_Wide < 0.05
     disp(['Condition: Wide ; Wilcoxon signed-rank Test (NormEnv vs ABEnv) p-value = ' num2str(p_ttest_Wide) ' - Significant difference']);
 else
@@ -518,11 +335,29 @@ grid on;
 
 
 
+%% Topoplot
+%%% plot that uses pearson r of normal envelope model and ab envelope over each subject
+% clear
+OT_setup
+% addpath("C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data")
+% load('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\StatsParticipantTask_new.mat');
+% %%
+[~, ~, ~, ~, EEG] = LoadEEG(1, 1, sbj, task);
 
+chanlocsData = EEG.chanlocs;
+figure; 
+[matrix_StdEnv_Narrow, matrix_ABenv_Narrow, matrix_StdEnv_Wide, matrix_ABenv_Wide] = PlotTopoplot(name_struct_new, chanlocsData, sbj);
+%%
+set(gca, 'FontSize', 15); % Adjust the font size for tick labels
+%%
+hFigure = gcf
+hFigure.Color = [1,1,1]
+hAxes = findobj(gcf,"Type","axes")
+hAxes(1).Color = [1,1,1]
+% Topoplot_filename = sprintf('Topoplota');
+% save_fig(gcf, 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Figures\Topoplot\',Topoplot_filename)
 
-
-
-
+%%
 function Box_and_Ranked_Plot(narrow_EnvNormR_mean, narrow_ABenvR_mean, wide_EnvNormR_mean, wide_ABenvR_mean)
 
     % Define colors for the different conditions

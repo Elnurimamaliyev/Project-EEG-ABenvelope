@@ -1,4 +1,4 @@
-%setup file
+%setup file - OT_setup.m
 
 % Add mTRF Toolbox Pathway
 addpath(genpath('C:\Users\icbmadmin\Documents\GitLabRep\EEGLAB\eeglab2024.2\')); % EEGLAB has been now added to Matlabs path and function can be accessed
@@ -6,7 +6,7 @@ addpath(genpath('C:\Users\icbmadmin\Documents\GitLabRep\mTRF-Toolbox\'));       
 
 % Add Data Pathway
 DATAPATH = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\';
-raw_data_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\raw_data\';
+raw_data_path = 'P:\';
 
 % addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\Preprocessed_Data\')
 addpath(genpath(DATAPATH));
@@ -18,16 +18,19 @@ addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Preproces
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\Preprocessing\Functions')
 addpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\FeatureToolbox')
 
+addpath(genpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\LoadEEG\'));
+addpath(genpath('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-ABenvelope\TopoPlot\'));
 
 chan_path = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\AllUsers\chan_info\';
 % fig_path = char('C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\Figs\');
 
 % task = {'wide'};
 % task = {'narrow'};
-% sbj =    {'P019'};
+% sbj =    {'P002'};
 % sbj =    {'P019', 'P009', 'P006','P020', 'P012'};
 
 task = {'narrow', 'wide'};
+
 sbj =    {'P001', 'P002','P003','P005', 'P006','P007','P008','P009',...
     'P010','P012','P013', 'P014','P015','P016','P017', 'P018',...
     'P019','P020','P021','P022'};

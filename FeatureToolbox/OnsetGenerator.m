@@ -10,10 +10,10 @@ function [mOnsetStim] = OnsetGenerator(mEnv, min_peak_distance, onset_threshold)
     %   mOnsetStim - A binary vector representing onsets detected in the envelope.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Default Values
-    if nargin < 6
+    if nargin < 3
         onset_threshold = 0.3; % Default threshold for peak detection
     end
-    if nargin < 5
+    if nargin < 2
         min_peak_distance = 15; % Default minimum distance between peaks
     end
     %% Onset Feature Generation

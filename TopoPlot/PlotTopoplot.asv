@@ -1,4 +1,4 @@
-function PlotTopoplot(StatsParticipantTask, chanlocsData, sbj)
+function [matrix_StdEnv_Narrow, matrix_ABenv_Narrow, avg_matrix_StdEnv_Wide, avg_matrix_ABenv_Wide] =PlotTopoplot(StatsParticipantTask, chanlocsData, sbj)
     
     
 
@@ -11,11 +11,11 @@ function PlotTopoplot(StatsParticipantTask, chanlocsData, sbj)
     
     for s = 1:length(sbj)
         % Narrow
-        matrix_StdEnv_Narrow(s, :) = StatsParticipantTask(s, 1).NormEnvStats.r;
+        matrix_StdEnv_Narrow(s, :) = StatsParticipantTask(s, 1).EnvNormStats.r;
         matrix_ABenv_Narrow(s, :) = StatsParticipantTask(s, 1).ABenvStats.r;
         
         % Wide
-        matrix_StdEnv_Wide(s, :) = StatsParticipantTask(s, 2).NormEnvStats.r;
+        matrix_StdEnv_Wide(s, :) = StatsParticipantTask(s, 2).EnvNormStats.r;
         matrix_ABenv_Wide(s, :) = StatsParticipantTask(s, 2).ABenvStats.r;
     end
     

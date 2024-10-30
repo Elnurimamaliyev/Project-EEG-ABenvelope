@@ -4,9 +4,9 @@ OT_setup
 for s = 1:length(sbj)
      disp(['Started processing Subject: ' sbj{s}]);
 
-     %move to the path where the data is to be saved
+     % move to the path where the data is to be saved
      cd(DATAPATH)
-     %check if a folder structure exists, and if not, make one
+     % check if a folder structure exists, and if not, make one
      if ~exist(sbj{s},'dir')
          mkdir(sbj{s})
          cd(sbj{s})
@@ -16,7 +16,7 @@ for s = 1:length(sbj)
 
     for k = 1:length(task)
      disp(['Task: ' task{k}]);
-        %load the EEG data
+        % load the EEG data
         EEGpath = [raw_data_path,'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'];
 
         EEG = pop_loadxdf(EEGpath, 'streamtype', 'EEG', 'exclude_markerstreams', {});
@@ -29,18 +29,6 @@ for s = 1:length(sbj)
         end
 
         EEG = pop_select( EEG, 'channel',{'Fp1','Fp2','Fz','F7','F8','FC1','FC2','Cz','C3','C4','T7','T8','CPz','CP1','CP2','CP5','CP6','TP9','TP10','Pz','P3','P4','O1','O2'});
-
-
-        EEGevent = EEG.event; % Start
-                              %      idx - 47
-                              %     type - 'narrow_game_start'	
-                              %  latency - 104725	
-                              % duration - 1
-                              % Stop
-                              %      idx - 47
-                              %     type - 'narrow_game_start'	
-                              %  latency - 104725	
-                              % duration - 1
         %% load the audio_stream (takes up to 5-10 minutes)
         audio_strct = pop_loadxdf([raw_data_path, 'sub-',sbj{s},'\ses-S001\eeg\sub-',sbj{s},'_ses-S001_task-',task{k},'_run-001_eeg.xdf'],...
             'streamname', 'TetrisAudio', 'exclude_markerstreams', {});
@@ -51,27 +39,17 @@ for s = 1:length(sbj)
         audio3 = audio2/3276.7;
         audio_strct.data = audio3;
 
-        % AudioEvent = audio_strct.event;
-
-
-        % backup_structt = audio_strct;
-        %%
-        % save backup_structure
-        %%
-        % load backup_structure.mat;
         %% 
-        audio_strct.event = EEG.event;
-        % audio_strct.event = ((EEG.event.latency)./(EEG.srate))*audio_strct.srate;
-
         % Extract latencies from EEG event structure
-        AudioEventFromEEG = [EEG.event.latency];
-
-        AudioEventLatencyFromEEGconverted = (AudioEventFromEEG / EEG.srate) * audio_strct.srate;
-
-        % % Assign the adjusted latencies back to the audio structure
-        for i = 1:length(EEG.event)
-            audio_strct.event(i).latency = AudioEventLatencyFromEEGconverted(i);
-        end
+        % audio_strct.event = EEG.event;
+        % AudioEventFromEEG = [EEG.event.latency];
+        % 
+        % AudioEventLatencyFromEEGconverted = (AudioEventFromEEG / EEG.srate) * audio_strct.srate;
+        % 
+        % % % Assign the adjusted latencies back to the audio structure
+        % for i = 1:length(EEG.event)
+        %     audio_strct.event(i).latency = AudioEventLatencyFromEEGconverted(i);
+        % end
 
         % audio_strct = pop_epoch(audio_strct, {[task{k},'_game_start']}, [0  EP_off_withEEG]);
         EP_off = (audio_strct.event(find(strcmpi({audio_strct.event.type}, 'game_end'))).latency - audio_strct.event(find(strcmpi({audio_strct.event.type}, [task{k},'_game_start']))).latency)/audio_strct.srate;

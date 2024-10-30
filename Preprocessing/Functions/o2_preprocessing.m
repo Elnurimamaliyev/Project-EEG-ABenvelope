@@ -1,5 +1,5 @@
 function [EEG,PATH] = o2_preprocessing(s,k,sbj,lp)
-%% Does the preprocessing for Onset tracking project
+%% Does the preprocessing for project
 %
 %Input:
 %s = subject number

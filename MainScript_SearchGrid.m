@@ -1,4 +1,5 @@
 %% Cleaning
+warning('off', 'MATLAB:nearlySingularMatrix');
 clear, clc;
 
 % Add Main paths
@@ -9,17 +10,19 @@ OT_setup
 clear EEG eeg_channel_labels
 %% Search Grid
 % Grid of bin ranges from 0 to 80 with different minimum values
-min_bin_values = [0, 10, 20, 30, 40, 50, 60, 70];
-max_bin_values = [6, 10, 20, 30, 40, 50, 60, 70, 80];
-num_bins_values = [4, 5, 6, 8, 9, 10, 12, 15, 16];
+% min_bin_values = [0, 10, 20, 30, 40, 50, 60, 70];
+% max_bin_values = [6, 10, 20, 30, 40, 50, 60, 70, 80];
+% num_bins_values = [4, 5, 6, 8, 12, 16];
 
-save_directory = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\BinsLoop'; % Specify your desired path here
+% min_bin_values = [0, 1, 2, 3, 4];
+% max_bin_values = [6, 7, 8, 9, 10, 11, 12];
+% num_bins_values = [4, 5, 6, 7, 8, 9, 10];
 
-% Create a parallel pool if not already created
-if isempty(gcp('nocreate'))
-    parpool; % Starts a parallel pool with default number of workers
-end
+min_bin_values = [1];
+max_bin_values = [9, 10, 11, 12];
+num_bins_values = [4, 5, 6, 7, 8, 9, 10];
 
+save_directory = 'C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\FineTuning'; % Specify your desired path here
 
 for min_i = 1:length(min_bin_values)
     for max_i = 1:length(max_bin_values)
@@ -35,6 +38,15 @@ for min_i = 1:length(min_bin_values)
                 continue; % Skip to the next iteration if conditions are not met
             end
 
+            % Name of struct to save
+            save_name = fullfile(save_directory, sprintf('Min_%d_Max_%d_Bin_%d.mat', min_bin, max_bin, num_bins));
+
+            % Check if the file already exists
+            if exist(save_name, 'file')
+                fprintf('File %s already exists. Skipping...\n', save_name);
+                continue; % Skip to the next iteration if the file already exists
+            end
+
             % Create bin edges
             binEdges_dB = linspace(min_bin, max_bin, num_bins + 1)';
             name_struct = struct(); % Initialize the structure
@@ -42,8 +54,6 @@ for min_i = 1:length(min_bin_values)
             % Run the search grid function
             name_struct_new = run_SearchGrid(name_struct, channel_idx, sbj, task, binEdges_dB, num_bins);
 
-            % Name of struct to save
-            save_name = fullfile(save_directory, sprintf('Min_%d_Max_%d_Bin_%d.mat', min_bin, max_bin, num_bins));
             try
                 % Save the current results in a .mat file named after the bin configuration
                 save(save_name, 'name_struct_new', '-v7.3'); % Use '-v7.3' for larger datasets if necessary
@@ -55,8 +65,6 @@ for min_i = 1:length(min_bin_values)
         end
     end
 end
-
-
 
 
 
@@ -106,13 +114,13 @@ function [name_struct] = run_SearchGrid(name_struct, channel_idx, sbj, task, bin
             total_counts = sum(DbCounts); % Total number of values across all bins
             bin_percentages = (DbCounts / total_counts) * 100; % Percentage of values in each bin
             low_percentage_threshold = 5;           % Define a threshold for low percentage bins (e.g., less than 5%)
-            low_percentage_bins = find(bin_percentages < low_percentage_threshold);        % Find the bins that have a percentage lower than the threshold
+            high_percentage_bins = find(bin_percentages > low_percentage_threshold);        % Find the bins that have a percentage lower than the threshold
     
             %%%% Exclude the bins with low percentages
             % exclude if low_percentage_bins is not the end number
-            ABenvRedBin = ABenv(:, low_percentage_bins(end)+1:end);
-            ABenvNormRedBin = ABenvNorm(:, low_percentage_bins(end)+1:end);
-    
+            ABenvRedBin = ABenv(:, high_percentage_bins);
+            ABenvNormRedBin = ABenvNorm(:, high_percentage_bins);
+
             %%%%%%% Ready Features
             if isempty(ABenvRedBin)
                 feature_names = {'EnvNorm', 'ABenv', 'ABenvNorm'};
@@ -166,10 +174,20 @@ function [name_struct] = run_SearchGrid(name_struct, channel_idx, sbj, task, bin
             end
     
     
-            disp ('Another!')
+            disp ('Finished!')
         end
     end
 
 end
 
 
+%%
+% min_bin = 60;
+% max_bin = 70;
+% num_bins = 10;
+% 
+% binEdges_dB = linspace(min_bin, max_bin, num_bins + 1)';
+% binEdges_linear = 10.^(binEdges_dB / 20);
+% NormBinEdges = normalize(binEdges_linear,1,'range');
+% NormBinEdges(end) = NormBinEdges(end) + eps; NormBinEdges(1) = NormBinEdges(1) - eps; % Extend the first and last bin edge slightly
+% 
