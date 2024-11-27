@@ -15,15 +15,34 @@
 
 %% Cleaning
 clear; clc;
-
 % Add Main paths
 OT_setup
+%%
+% Assume multiple error plots exist
+all_error_handles = findall(gca, 'Type', 'ErrorBar'); % Find all error bars in the current axes
+
+% Loop through each error bar handle
+for i = 1:length(all_error_handles)
+    % Set line width
+    set(all_error_handles(i), 'LineWidth', 1.7);
+    
+    % Set cap size
+    set(all_error_handles(i), 'CapSize', 7);
+    
+    % Add a point in the middle (modify marker properties)
+    % 'Marker' sets the symbol, 'MarkerSize' sets the size, 'MarkerFaceColor' fills it
+    set(all_error_handles(i), 'Marker', 'o', 'MarkerSize', 3, 'MarkerFaceColor', 'none');
+end
+
+%%
+load("C:\Users\icbmadmin\Documents\GitLabRep\Project-EEG-Data\StatsParticipantTask_0_096_10.mat")
+name_struct_new = StatsParticipantTask_0_096_10;
 %% Channel selection
 [~, ~, ~, ~, EEG] = LoadEEG(1, 1, sbj, task);
 eeg_channel_labels = {EEG.chanlocs.labels}; selected_channels = {'C3', 'FC2', 'FC1', 'Cz', 'C4'};
 [~, channel_idx] = ismember(selected_channels, eeg_channel_labels);  % Find the indices corresponding to the selected channels in your EEG data
 %% Continue once you have a running pre-processing pipeline
-StatsParticipantTask_28_10 = struct();
+StatsParticipantTask_17_11 = struct();
 for s = 1:length(sbj)
     for k = 1:length(task)
         fprintf('Subject: %s \nTask: %s\n', sbj{s}, task{k}); % Print Subject and Task
@@ -34,7 +53,7 @@ for s = 1:length(sbj)
         resp = full_resp(:, channel_idx);
         % resp = full_resp;
 
-        [EnvNorm, ABenvNorm, Onset, OnsetEnvelope, resp]...
+        [EnvNorm, ABenvNorm, Onset, OnsetEnvelope, resp, binEdges_dB]...
         = feature_deriv(audio_dat, fs_audio, fs_eeg, resp);
 
         OnsetandEnvelope = [ABenvNorm(:,1:8), Onset];
@@ -88,17 +107,17 @@ for s = 1:length(sbj)
 
             % Store mean correlation values
             if feature_idx == 1                                     %NormEnv
-                StatsParticipantTask_28_10(s, k).standardEnvelopeModel = model;
-                StatsParticipantTask_28_10(s, k).standardEnvelopeStats = stats;
+                StatsParticipantTask_17_11(s, k).standardEnvelopeModel = model;
+                StatsParticipantTask_17_11(s, k).standardEnvelopeStats = stats;
             elseif feature_idx == 2                                 %ABons
-                StatsParticipantTask_28_10(s, k).ABenvNormModel = model;
-                StatsParticipantTask_28_10(s, k).ABenvNormStats = stats;
+                StatsParticipantTask_17_11(s, k).ABenvNormModel = model;
+                StatsParticipantTask_17_11(s, k).ABenvNormStats = stats;
             elseif feature_idx == 3                                 %ABenv
-                StatsParticipantTask_28_10(s, k).ABenvOnsetenvModel = model;
-                StatsParticipantTask_28_10(s, k).ABenvOnsetenvStats = stats;
+                StatsParticipantTask_17_11(s, k).ABenvOnsetenvModel = model;
+                StatsParticipantTask_17_11(s, k).ABenvOnsetenvStats = stats;
             elseif feature_idx == 4                                 %Onset
-                    StatsParticipantTask_28_10(s, k).OnsetEnvelopeModel = model;
-                    StatsParticipantTask_28_10(s, k).OnsetEnvelopeStats = stats;
+                    StatsParticipantTask_17_11(s, k).OnsetEnvelopeModel = model;
+                    StatsParticipantTask_17_11(s, k).OnsetEnvelopeStats = stats;
             end
                 % elseif feature_idx == 4                                 %Onset
             %         StatsParticipantTask_28_10(s, k).OnsetandEnvelopeModel = model;
@@ -106,15 +125,14 @@ for s = 1:length(sbj)
             % end
         end
         % Save Participant and Task IDs
-        StatsParticipantTask_28_10(s, k).ParticipantID = s;  % s is the participant ID
-        StatsParticipantTask_28_10(s, k).TaskID = k;         % k is the task ID
+        StatsParticipantTask_17_11(s, k).ParticipantID = s;  % s is the participant ID
+        StatsParticipantTask_17_11(s, k).TaskID = k;         % k is the task ID
 
         % clear stim_Env  stim_ABenv NormEnv NormBinEdges BinEdges num_bins fs_eeg resp fs_audio audio_dat;
         disp ('Results are saved!')
     
     end
 end
-
 
 %% Topoplot
 %%% plot that uses pearson r of normal envelope model and ab envelope over each subject
@@ -133,23 +151,25 @@ end
 %%
 OT_setup
 % name_struct_new = StatsParticipantTask_0_096_10;
-name_struct_new = StatsParticipantTask_28_10;
-
+% name_struct_new = StatsParticipantTask_12_11;
+name_struct_new = StatsParticipantTask_27_10;
 %%
 % Initialize arrays to store Pearson r values
 % Narrow
 
 narrow_standardEnvR_mean = NaN(length(sbj), 1);
+narrow_ABenvNormR_mean = NaN(length(sbj), 1);
+
 narrow_ABenvOnsetR_mean = NaN(length(sbj), 1);
 % narrow_OnsetandEnvelopeR_mean = NaN(length(sbj), 1);
-narrow_ABenvNormR_mean = NaN(length(sbj), 1);
 narrow_OnsetEnvR_mean = NaN(length(sbj), 1);
 % Wide
 
 wide_standardEnvR_mean = NaN(length(sbj), 1);
+wide_ABenvNormR_mean = NaN(length(sbj), 1);
+
 wide_ABenvOnsetR_mean = NaN(length(sbj), 1);
 % wide_OnsetandEnvelopeR_mean = NaN(length(sbj), 1);
-wide_ABenvNormR_mean = NaN(length(sbj), 1);
 wide_OnsetEnvR_mean = NaN(length(sbj), 1);
 
 
@@ -160,7 +180,6 @@ wide_OnsetEnvR_mean = NaN(length(sbj), 1);
 for s = 1:length(sbj)
     for k = 1:length(task)
         
-
         if isfield(name_struct_new(s, k), 'standardEnvelopeStats')
             if strcmp(task{k}, 'narrow') % Assuming task names are used to differentiate conditions
                 narrow_standardEnvR_mean(s) = mean(name_struct_new(s, k).standardEnvelopeStats.r);
@@ -175,6 +194,28 @@ for s = 1:length(sbj)
                 wide_ABenvNormR_mean(s) = mean(name_struct_new(s, k).ABenvNormStats.r);
             end
         end
+        % if isfield(name_struct_new(s, k), 'ABenvNormStats')
+        %     if strcmp(task{k}, 'narrow')
+        %         narrow_ABenvNormNormR_mean(s) = mean(name_struct_new(s, k).ABenvNormStats.r);
+        %     elseif strcmp(task{k}, 'wide')
+        %         wide_ABenvNormNormR_mean(s) = mean(name_struct_new(s, k).ABenvNormStats.r);
+        %     end
+        % end
+        % 
+        % if isfield(name_struct_new(s, k), 'standardEnvelopeStats')
+        %     if strcmp(task{k}, 'narrow') % Assuming task names are used to differentiate conditions
+        %         narrow_standardEnvR_mean(s) = mean(name_struct_new(s, k).standardEnvelopeStats.r);
+        %     elseif strcmp(task{k}, 'wide')
+        %         wide_standardEnvR_mean(s) = mean(name_struct_new(s, k).standardEnvelopeStats.r);
+        %     end
+        % end
+        % if isfield(name_struct_new(s, k), 'ABenvNormStats')
+        %     if strcmp(task{k}, 'narrow')
+        %         narrow_ABenvNormR_mean(s) = mean(name_struct_new(s, k).ABenvNormStats.r);
+        %     elseif strcmp(task{k}, 'wide')
+        %         wide_ABenvNormR_mean(s) = mean(name_struct_new(s, k).ABenvNormStats.r);
+        %     end
+        % end
         if isfield(name_struct_new(s, k), 'ABenvOnsetenvStats')
             if strcmp(task{k}, 'narrow')
                 narrow_ABenvOnsetR_mean(s) = mean(name_struct_new(s, k).ABenvOnsetenvStats.r);
@@ -189,18 +230,103 @@ for s = 1:length(sbj)
         %         wide_OnsetandEnvelopeR_mean(s) = mean(name_struct_new(s, k).OnsetandEnvelopeStats.r);
         %     end
         % end
-        if isfield(name_struct_new(s, k), 'OnsetEnvelopeStats')
+        if isfield(StatsParticipantTask_26_10(s, k), 'onsetEnvelopeStats')
             if strcmp(task{k}, 'narrow')
-                narrow_OnsetEnvR_mean(s) = mean(name_struct_new(s, k).OnsetEnvelopeStats.r);
+                narrow_OnsetEnvR_mean(s) = mean(StatsParticipantTask_26_10(s, k).onsetEnvelopeStats.r);
             elseif strcmp(task{k}, 'wide')
-                wide_OnsetEnvR_mean(s) = mean(name_struct_new(s, k).OnsetEnvelopeStats.r);
+                wide_OnsetEnvR_mean(s) = mean(StatsParticipantTask_26_10(s, k).onsetEnvelopeStats.r);
             end
         end
 
     end
 end
 
+%%
+% Paired T-test and Wilcoxon signed-rank test for Narrow condition
+disp('=== Narrow Condition ===');
+[h_ttest_Narrow, p_ttest_Narrow, ci_ttest_Narrow, stats_ttest_Narrow] = ttest(narrow_ABenvNormR_mean, narrow_standardEnvR_mean);
+effect_size_ttest_Narrow = mean(narrow_ABenvNormR_mean - narrow_standardEnvR_mean) / std(narrow_ABenvNormR_mean - narrow_standardEnvR_mean); % Cohen's d
 
+% Display T-test results
+if p_ttest_Narrow < 0.05
+    disp(['Paired T-test: t = ' num2str(stats_ttest_Narrow.tstat) ', p = ' num2str(p_ttest_Narrow) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_Narrow) ' - Significant difference']);
+else
+    disp(['Paired T-test: t = ' num2str(stats_ttest_Narrow.tstat) ', p = ' num2str(p_ttest_Narrow) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_Narrow) ' - No significant difference']);
+end
+
+[p_wilcoxon_Narrow, ~, stats_wilcoxon_Narrow] = signrank(narrow_ABenvNormR_mean, narrow_standardEnvR_mean);
+rank_biserial_Narrow = 2 * (stats_wilcoxon_Narrow.signedrank / (length(narrow_ABenvNormR_mean) * (length(narrow_ABenvNormR_mean) + 1) / 2)) - 1; % Rank-biserial correlation
+
+% Display Wilcoxon signed-rank results
+if p_wilcoxon_Narrow < 0.05
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_Narrow) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_Narrow) ' - Significant difference']);
+else
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_Narrow) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_Narrow) ' - No significant difference']);
+end
+
+% Paired T-test and Wilcoxon signed-rank test for Wide condition
+disp('=== Wide Condition ===');
+[h_ttest_Wide, p_ttest_Wide, ci_ttest_Wide, stats_ttest_Wide] = ttest(wide_ABenvNormR_mean, wide_standardEnvR_mean);
+effect_size_ttest_Wide = mean(wide_ABenvNormR_mean - wide_standardEnvR_mean) / std(wide_ABenvNormR_mean - wide_standardEnvR_mean); % Cohen's d
+
+% Display T-test results
+if p_ttest_Wide < 0.05
+    disp(['Paired T-test: t = ' num2str(stats_ttest_Wide.tstat) ', p = ' num2str(p_ttest_Wide) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_Wide) ' - Significant difference']);
+else
+    disp(['Paired T-test: t = ' num2str(stats_ttest_Wide.tstat) ', p = ' num2str(p_ttest_Wide) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_Wide) ' - No significant difference']);
+end
+
+[p_wilcoxon_Wide, ~, stats_wilcoxon_Wide] = signrank(wide_ABenvNormR_mean, wide_standardEnvR_mean);
+rank_biserial_Wide = 2 * (stats_wilcoxon_Wide.signedrank / (length(wide_ABenvNormR_mean) * (length(wide_ABenvNormR_mean) + 1) / 2)) - 1; % Rank-biserial correlation
+
+% Display Wilcoxon signed-rank results
+if p_wilcoxon_Wide < 0.05
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_Wide) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_Wide) ' - Significant difference']);
+else
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_Wide) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_Wide) ' - No significant difference']);
+end
+
+%%
+% Averaging Narrow and Wide conditions
+average_ABenvNormR_mean = (narrow_ABenvNormR_mean + wide_ABenvNormR_mean) / 2;
+average_standardEnvR_mean = (narrow_standardEnvR_mean + wide_standardEnvR_mean) / 2;
+
+% Paired T-test and Wilcoxon signed-rank test for the averaged condition
+disp('=== Averaged Condition ===');
+
+% Paired T-test for averaged conditions
+[h_ttest_avg, p_ttest_avg, ci_ttest_avg, stats_ttest_avg] = ttest(average_standardEnvR_mean, average_ABenvNormR_mean);
+effect_size_ttest_avg = mean(average_standardEnvR_mean - average_ABenvNormR_mean) / std(average_standardEnvR_mean - average_ABenvNormR_mean); % Cohen's d
+
+% Display T-test results for averaged condition
+if p_ttest_avg < 0.05
+    disp(['Paired T-test: t = ' num2str(stats_ttest_avg.tstat) ', p = ' num2str(p_ttest_avg) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_avg) ' - Significant difference']);
+else
+    disp(['Paired T-test: t = ' num2str(stats_ttest_avg.tstat) ', p = ' num2str(p_ttest_avg) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_avg) ' - No significant difference']);
+end
+
+% Wilcoxon signed-rank test for averaged conditions
+[p_wilcoxon_avg, ~, stats_wilcoxon_avg] = signrank(average_standardEnvR_mean, average_ABenvNormR_mean);
+rank_biserial_avg = 2 * (stats_wilcoxon_avg.signedrank / (length(average_standardEnvR_mean) * (length(average_standardEnvR_mean) + 1) / 2)) - 1; % Rank-biserial correlation
+
+% Display Wilcoxon signed-rank results for averaged condition
+if p_wilcoxon_avg < 0.05
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_avg) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_avg) ' - Significant difference']);
+else
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_avg) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_avg) ' - No significant difference']);
+end
 
 %% Combination
 % meanstandardEnvR=(narrow_standardEnvR_mean + wide_standardEnvR_mean)/2;
@@ -236,25 +362,68 @@ Box_and_Ranked_Plot(meanstandardEnvR, meanABEnvR, wide_standardEnvR_mean, wide_A
 
 
 %%
-meanABEnvR=(narrow_ABenvNormR_mean + wide_ABenvNormR_mean)/2;
-meancombinedR=(narrow_ABenvOnsetR_mean+wide_ABenvOnsetR_mean)/2;
-meanOnsetEnvR=(narrow_OnsetEnvR_mean+wide_OnsetEnvR_mean)/2;
+% Averaging Narrow and Wide conditions for combined, ABEnv, and OnsetEnv
+meanABEnvR = (narrow_ABenvNormR_mean + wide_ABenvNormR_mean) / 2;
+meanOnsetEnvR = (narrow_OnsetEnvR_mean + wide_OnsetEnvR_mean) / 2;
+meancombinedR = (narrow_ABenvOnsetR_mean + wide_ABenvOnsetR_mean) / 2;
 
-[h_ttest_Mean, p_ttest_Mean, ci_Narrow, stats_Narrow] = ttest(meanABEnvR, meancombinedR);
-d_Narrow = stats_Narrow.tstat / sqrt(length(meanABEnvR)); % Cohen's d
+% Paired T-test and Wilcoxon signed-rank test for combined vs ABEnv
+disp('=== Combined vs ABEnv ===');
 
-if p_ttest_Mean < 0.05
-    disp(['Condition: Average - (narrow+wide)/2 ; Paired t-Test (ABEnv vs Combined) p-value = ' num2str(p_ttest_Mean) ' - Significant difference, Cohen''s d = ' num2str(d_Narrow)]);
+% Paired T-test for combined vs ABEnv
+[h_ttest_comb_AB, p_ttest_comb_AB, ci_ttest_comb_AB, stats_ttest_comb_AB] = ttest(meancombinedR, meanABEnvR);
+effect_size_ttest_comb_AB = mean(meancombinedR - meanABEnvR) / std(meancombinedR - meanABEnvR); % Cohen's d
+
+% Display T-test results for combined vs ABEnv
+if p_ttest_comb_AB < 0.05
+    disp(['Paired T-test: t = ' num2str(stats_ttest_comb_AB.tstat) ', p = ' num2str(p_ttest_comb_AB) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_comb_AB) ' - Significant difference']);
 else
-    disp(['Condition: Average - (narrow+wide)/2 ; Paired t-Test (ABEnv vs Combined) p-value = ' num2str(p_ttest_Mean) ' - No significant difference']);
+    disp(['Paired T-test: t = ' num2str(stats_ttest_comb_AB.tstat) ', p = ' num2str(p_ttest_comb_AB) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_comb_AB) ' - No significant difference']);
 end
 
-% Wilcoxon signed-rank test for Wide condition: NormEnv vs ABEnv
-[p_wilcoxon_Mean, h_wilcoxon_Mean] = signrank(meanABEnvR, meancombinedR, 'alpha', 0.05);
-if p_wilcoxon_Mean < 0.05
-    disp(['Condition: Average - (narrow+wide)/2 ; Wilcoxon signed-rank Test (ABEnv vs Combined) p-value = ' num2str(p_wilcoxon_Mean) ' - Significant difference']);
+% Wilcoxon signed-rank test for combined vs ABEnv
+[p_wilcoxon_comb_AB, ~, stats_wilcoxon_comb_AB] = signrank(meancombinedR, meanABEnvR);
+rank_biserial_comb_AB = 2 * (stats_wilcoxon_comb_AB.signedrank / (length(meancombinedR) * (length(meancombinedR) + 1) / 2)) - 1; % Rank-biserial correlation
+
+% Display Wilcoxon signed-rank results for combined vs ABEnv
+if p_wilcoxon_comb_AB < 0.05
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_comb_AB) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_comb_AB) ' - Significant difference']);
 else
-    disp(['Condition: Average - (narrow+wide)/2 ; Wilcoxon signed-rank Test (ABEnv vs Combined) p-value = ' num2str(p_wilcoxon_Mean) ' - No significant difference']);
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_comb_AB) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_comb_AB) ' - No significant difference']);
+end
+
+
+% Paired T-test and Wilcoxon signed-rank test for combined vs OnsetEnv
+disp('=== Combined vs OnsetEnv ===');
+
+% Paired T-test for combined vs OnsetEnv
+[h_ttest_comb_Onset, p_ttest_comb_Onset, ci_ttest_comb_Onset, stats_ttest_comb_Onset] = ttest(meancombinedR, meanOnsetEnvR);
+effect_size_ttest_comb_Onset = mean(meancombinedR - meanOnsetEnvR) / std(meancombinedR - meanOnsetEnvR); % Cohen's d
+
+% Display T-test results for combined vs OnsetEnv
+if p_ttest_comb_Onset < 0.05
+    disp(['Paired T-test: t = ' num2str(stats_ttest_comb_Onset.tstat) ', p = ' num2str(p_ttest_comb_Onset) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_comb_Onset) ' - Significant difference']);
+else
+    disp(['Paired T-test: t = ' num2str(stats_ttest_comb_Onset.tstat) ', p = ' num2str(p_ttest_comb_Onset) ...
+          ', Cohen''s d = ' num2str(effect_size_ttest_comb_Onset) ' - No significant difference']);
+end
+
+% Wilcoxon signed-rank test for combined vs OnsetEnv
+[p_wilcoxon_comb_Onset, ~, stats_wilcoxon_comb_Onset] = signrank(meancombinedR, meanOnsetEnvR);
+rank_biserial_comb_Onset = 2 * (stats_wilcoxon_comb_Onset.signedrank / (length(meancombinedR) * (length(meancombinedR) + 1) / 2)) - 1; % Rank-biserial correlation
+
+% Display Wilcoxon signed-rank results for combined vs OnsetEnv
+if p_wilcoxon_comb_Onset < 0.05
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_comb_Onset) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_comb_Onset) ' - Significant difference']);
+else
+    disp(['Wilcoxon signed-rank test: p = ' num2str(p_wilcoxon_comb_Onset) ...
+          ', Rank-biserial correlation = ' num2str(rank_biserial_comb_Onset) ' - No significant difference']);
 end
 
 
@@ -265,24 +434,24 @@ end
 
 % Apply the same sorting for all narrow condition envelopes
 sorted_narrow_ABenvR_mean = narrow_ABenvNormR_mean(sortIdx_narrow);
-sorted_narrow_OnsetandEnvelopeR_mean = narrow_OnsetandEnvelopeR_mean(sortIdx_narrow);
-sorted_narrowABenvOnsetStatsR_mean = narrow_ABenvOnsetR_mean(sortIdx_narrow);
+% sorted_narrow_OnsetandEnvelopeR_mean = narrow_OnsetandEnvelopeR_mean(sortIdx_narrow);
+% sorted_narrowABenvOnsetStatsR_mean = narrow_ABenvOnsetR_mean(sortIdx_narrow);
 
 [sorted_wide_standardEnvR_mean, sortIdx_wide] = sort(wide_standardEnvR_mean, 'ascend');
 
 % Apply the same sorting for all wide condition envelopes
 sorted_wide_ABenvR_mean = wide_ABenvNormR_mean(sortIdx_wide);
-sorted_wide_OnsetandEnvelopeR_mean = wide_OnsetandEnvelopeR_mean(sortIdx_wide);
-sorted_wideABenvOnsetStatsR_mean = wide_ABenvOnsetR_mean(sortIdx_wide);
+% sorted_wide_OnsetandEnvelopeR_mean = wide_OnsetandEnvelopeR_mean(sortIdx_wide);
+% sorted_wideABenvOnsetStatsR_mean = wide_ABenvOnsetR_mean(sortIdx_wide);
 
 figure;
 
 % Narrow Condition
 subplot(1,2,1); hold on;
-% plot(1:length(sbj), sorted_narrow_standardEnvR_mean, 'o-', 'DisplayName', 'Standard Env', 'LineWidth', 2, 'MarkerSize', 5);
+plot(1:length(sbj), sorted_narrow_standardEnvR_mean, 'o-', 'DisplayName', 'Standard Env', 'LineWidth', 2, 'MarkerSize', 5);
 plot(1:length(sbj), sorted_narrow_ABenvR_mean, 'o-', 'Color', [0.5 0 0.5], 'DisplayName', 'AB Env', 'LineWidth', 2, 'MarkerSize', 5);
-plot(1:length(sbj), sorted_narrow_OnsetandEnvelopeR_mean, 'o-', 'Color', [0.1 0.5 0.1], 'DisplayName', 'OnsetandEnvelope', 'LineWidth', 2, 'MarkerSize', 5); % Onset Envelope
-plot(1:length(sbj), sorted_narrowABenvOnsetStatsR_mean, 'o-', 'Color', [0.8 0.3 0], 'DisplayName', 'ABenvOnset', 'LineWidth', 2, 'MarkerSize', 5);
+% plot(1:length(sbj), sorted_narrow_OnsetandEnvelopeR_mean, 'o-', 'Color', [0.1 0.5 0.1], 'DisplayName', 'OnsetandEnvelope', 'LineWidth', 2, 'MarkerSize', 5); % Onset Envelope
+% plot(1:length(sbj), sorted_narrowABenvOnsetStatsR_mean, 'o-', 'Color', [0.8 0.3 0], 'DisplayName', 'ABenvOnset', 'LineWidth', 2, 'MarkerSize', 5);
 xlabel('Subjects (sorted by Standard Env values)', 'FontWeight', 'bold'); 
 ylabel("Pearson's r (mean)");
 ylim([-0.02 0.20]); yticks(-0.02:0.04:0.20);
@@ -295,10 +464,10 @@ set(gca, 'FontSize', 13);
 
 % Wide Condition
 subplot(1,2,2); hold on;
-% plot(1:length(sbj), sorted_wide_standardEnvR_mean, 'o-', 'DisplayName', 'Standard Env', 'LineWidth', 2, 'MarkerSize', 5);
+plot(1:length(sbj), sorted_wide_standardEnvR_mean, 'o-', 'DisplayName', 'Standard Env', 'LineWidth', 2, 'MarkerSize', 5);
 plot(1:length(sbj), sorted_wide_ABenvR_mean, 'o-', 'Color', [0.5 0 0.5], 'DisplayName', 'AB Env', 'LineWidth', 2, 'MarkerSize', 5);
-plot(1:length(sbj), sorted_wide_OnsetandEnvelopeR_mean, 'o-', 'Color', [0.1 0.5 0.1], 'DisplayName', 'OnsetandEnvelope', 'LineWidth', 2, 'MarkerSize', 5); % Onset Envelope
-plot(1:length(sbj), sorted_wideABenvOnsetStatsR_mean, 'o-', 'Color', [0.8 0.3 0], 'DisplayName', 'ABenvOnset', 'LineWidth', 2, 'MarkerSize', 5); 
+% plot(1:length(sbj), sorted_wide_OnsetandEnvelopeR_mean, 'o-', 'Color', [0.1 0.5 0.1], 'DisplayName', 'OnsetandEnvelope', 'LineWidth', 2, 'MarkerSize', 5); % Onset Envelope
+% plot(1:length(sbj), sorted_wideABenvOnsetStatsR_mean, 'o-', 'Color', [0.8 0.3 0], 'DisplayName', 'ABenvOnset', 'LineWidth', 2, 'MarkerSize', 5); 
 xlabel('Subjects (sorted by Standard Env values)', 'FontWeight', 'bold', 'FontSize', 12); 
 ylabel("Pearson's r (mean)");
 ylim([-0.02 0.20]); yticks(-0.02:0.04:0.20);
@@ -332,7 +501,7 @@ xlabel('Subjects (sorted by Standard Env values)', 'FontWeight', 'bold', 'FontSi
 ylabel("Pearson's r (mean)");
 ylim([-0.02 0.20]); yticks(-0.02:0.04:0.20);
 xlim([0.5 20.5]);
-title('Mean of both conditions results', 'FontWeight', 'bold'); 
+title('Prediction accuracies (Condition averaged)', 'FontWeight', 'bold'); 
 grid on; hold on; box off;
 yline(0, '--k', 'DisplayName', 'near zero indicator', 'LineWidth', 1.5);
 
@@ -366,8 +535,8 @@ DbCounts_all_wide = zeros(20, 8);
 
 for s = 1:length(sbj)
         % Extract DbCounts and binEdges_dB for the current subject and task
-        DbCounts_all_narrow(s,:) = StatsParticipantTask_28_10(s, 1).DbCounts;
-        DbCounts_all_wide(s,:) = StatsParticipantTask_28_10(s, 2).DbCounts;
+        DbCounts_all_narrow(s,:) = StatsParticipantTask_17_11(s, 1).DbCounts;
+        DbCounts_all_wide(s,:) = StatsParticipantTask_17_11(s, 2).DbCounts;
 end
 
 mean_DbCounts_all_narrow = mean(DbCounts_all_narrow, 1);
@@ -438,7 +607,7 @@ set(gca,'view',[90 -90], 'YTickLabel', num2str(yticks', '%.0f'));
 % Add the function
 addpath('C:\Users\icbmadmin\AppData\Roaming\MathWorks\MATLAB Add-Ons\Functions\Shapiro-Wilk and Shapiro-Francia normality tests')
 % Name the variables
-variables = {narrow_EnvNormR_mean, narrow_ABenvNormR_mean, wide_EnvNormR_mean, wide_ABenvNormR_mean};
+variables = {narrow_standardEnvR_mean, narrow_ABenvNormR_mean, wide_standardEnvR_mean, wide_ABenvNormR_mean};
 % Run for loop over variables to check the normality
 for i = 1:length(variables)
     [h_sw_NormEnv, p_sw_NormEnv, stats_sw_NormEnv] = swtest(variables{i}, 0.05);
@@ -482,7 +651,7 @@ if p_wilcoxon_Wide < 0.05
 else
     disp(['Condition: Wide ; Wilcoxon signed-rank Test (NormEnv vs ABEnv) p-value = ' num2str(p_wilcoxon_Wide) ' - No significant difference']);
 end
-
+%%
 % Wilcoxon signed-rank test for Wide condition: NormEnv vs ABEnv
 [p_wilcoxon_Wide, h_wilcoxon_Wide] = signrank(wide_standardEnvR_mean, wide_OnsetandEnvelopeR_mean, 'alpha', 0.05);
 if p_wilcoxon_Wide < 0.05
@@ -572,6 +741,8 @@ if p_ttest_Wide < 0.05
 else
     disp(['Condition: Wide ; Wilcoxon signed-rank Test (NormEnv vs ABEnv) p-value = ' num2str(p_ttest_Wide) ' - No significant difference']);
 end
+
+
 %%
 % Create a figure for boxplots
 figure;

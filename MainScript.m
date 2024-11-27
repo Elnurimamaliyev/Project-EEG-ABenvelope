@@ -184,7 +184,7 @@ save(savePath, 'StatsParticipantTask_equal');     % Save the StatsParticipantTas
 
 %%
 OT_setup
-name_struct_new = StatsParticipantTask_0_096_10;
+% name_struct_new = StatsParticipantTask_0_096_10;
 %%
 % Initialize arrays to store Pearson r values
 % Narrow
