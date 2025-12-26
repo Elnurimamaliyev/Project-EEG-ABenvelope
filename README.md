@@ -1,4 +1,4 @@
-# EEG Analysis with Amplitude-Binned Envelope Features
+# Modeling EEG Responses using Amplitude-Binned Envelope Features with mTRF Framework
 
 A MATLAB-based research project for analyzing EEG data using the multivariate Temporal Response Function (mTRF) framework with novel amplitude-binned (AB) envelope features.
 
