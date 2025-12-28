@@ -8,6 +8,10 @@ This project investigates cortical tracking of complex sound envelopes by extrac
 
 For detailed information, see the [Munich Brain Day 2025 Poster](Munich_Brain_Day_2025_Poster.pdf). or [Munich Brain Day 2025 Abstract Book](MBD25_abstractbook_final2.pdf).
 
+Full report is here: [Amplitude-Binned Envelope Modeling Report](Report - Amplitude-Binned Envelope Modeling for EEG Response Prediction in Naturalistic Soundscapes (Internal Research Project - IRP).pdf)
+
+
+
 
 ![poster for Munich_Brain_Day_2025](Munich_Brain_Day_2025_Poster.png)
 
