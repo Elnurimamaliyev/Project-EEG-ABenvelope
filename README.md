@@ -7,11 +7,7 @@ A MATLAB-based research project for analyzing EEG data using Linear regression m
 This project investigates cortical tracking of complex sound envelopes by extracting audio features (envelope, onset, amplitude-binned envelope) and correlating them with EEG recordings. The core innovation is the **Amplitude-Binned (AB) Envelope** method, which bins audio amplitude into discrete ranges to better capture neural responses to sound intensity changes.
 
 For detailed information, see the [Munich Brain Day 2025 Poster](Munich_Brain_Day_2025_Poster.pdf). or [Munich Brain Day 2025 Abstract Book](MBD25_abstractbook_final2.pdf).
-
-Full report is here: [Amplitude-Binned Envelope Modeling Report](Report - Amplitude-Binned Envelope Modeling for EEG Response Prediction in Naturalistic Soundscapes (Internal Research Project - IRP).pdf)
-
-
-
+Find full report here: [Amplitude-Binned Envelope Modeling Report](Report_Amplitude-Binned_Envelope_Modeling_for_EEG_Response_Prediction_in_Naturalistic_Soundscapes.pdf).
 
 ![poster for Munich_Brain_Day_2025](Munich_Brain_Day_2025_Poster.png)
 
